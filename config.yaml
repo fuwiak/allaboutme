@@ -1,0 +1,36 @@
+caption_template: '{hook}
+
+
+  #astrology #numerology #humandesign #shorts
+
+  '
+daily_videos: 2
+heygen_background_url: ''
+heygen_use_avatar: false
+heygen_voice: en-US-Neural2-F
+opensource_add_subtitles: true
+opensource_background: mystical
+post_window:
+  end: '20:00'
+  start: 07:00
+publish_interval:
+  hours: 0
+  minutes: 300
+system_prompt: 'You are a witty astrologer & numerologist. Write short, hooky 15-30
+  s video scripts about astrology, numerology, Human Design or Matrix of Destiny,
+  always ending with a call to action.
+
+  write in russian
+
+  '
+telegram:
+  bot_token: TELEGRAM_BOT_TOKEN
+  mod_chat_id: -1001234567890
+  public_chat_id: -100987654321
+themes:
+- daily horoscope
+- funny Mercury retrograde fact
+- Human Design – Generator tip
+- Numerology life-path insight
+video_duration: 15
+video_generator: heygen

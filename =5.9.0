@@ -1,0 +1,7 @@
+Collecting psutil
+  Obtaining dependency information for psutil from https://files.pythonhosted.org/packages/46/62/ce4051019ee20ce0ed74432dd73a5bb087a6704284a470bb8adff69a0932/psutil-7.1.0-cp36-abi3-macosx_10_9_x86_64.whl.metadata
+  Downloading psutil-7.1.0-cp36-abi3-macosx_10_9_x86_64.whl.metadata (23 kB)
+Downloading psutil-7.1.0-cp36-abi3-macosx_10_9_x86_64.whl (245 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 245.2/245.2 kB 1.3 MB/s eta 0:00:00
+Installing collected packages: psutil
+Successfully installed psutil-7.1.0
