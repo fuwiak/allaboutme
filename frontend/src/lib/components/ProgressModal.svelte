@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { connectProgress } from '$lib/websocket';
+	import { t } from '$lib/i18n';
 
 	export let taskId: string;
 	export let title: string = 'Processing...';
@@ -149,14 +150,14 @@
 						disabled={isCancelling}
 						class="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
 					>
-						{#if isCancelling}
-							<span class="flex items-center gap-2">
-								<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-								Cancelling...
-							</span>
-						{:else}
-							⏹️ Stop
-						{/if}
+					{#if isCancelling}
+						<span class="flex items-center gap-2">
+							<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+							{$t('common.cancelling')}
+						</span>
+					{:else}
+						⏹️ {$t('common.stop')}
+					{/if}
 					</button>
 				{/if}
 				{#if isCompleted}

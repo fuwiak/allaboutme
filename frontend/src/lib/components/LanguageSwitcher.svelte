@@ -1,30 +1,48 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { language, type Language } from '$lib/i18n';
 	import { api } from '$lib/api';
 
-	let currentLanguage = 'ru';
+	let currentLanguage: Language = 'ru';
 	let loading = false;
 
-	onMount(async () => {
-		try {
-			const settings = await api.getSettings();
-			currentLanguage = settings.language || 'ru';
-		} catch (error) {
-			console.error('Error loading language:', error);
-		}
+	// Subscribe to language store
+	const unsubscribe = language.subscribe(value => {
+		currentLanguage = value;
+	});
+
+	onMount(() => {
+		// Load language from backend
+		api.getSettings()
+			.then(settings => {
+				if (settings.language) {
+					language.set(settings.language as Language);
+				}
+			})
+			.catch(error => {
+				console.error('Error loading language:', error);
+			});
+		
+		// Return cleanup function
+		return () => {
+			unsubscribe();
+		};
 	});
 
 	async function toggleLanguage() {
 		loading = true;
 		try {
-			const newLang = currentLanguage === 'ru' ? 'en' : 'ru';
-			await api.updateSettings({ language: newLang });
-			currentLanguage = newLang;
+			const newLang: Language = currentLanguage === 'ru' ? 'en' : 'ru';
 			
-			// Reload page to apply new language
-			window.location.reload();
+			// Update local store immediately for instant UI change
+			language.set(newLang);
+			
+			// Save to backend
+			await api.updateSettings({ language: newLang });
 		} catch (error) {
 			console.error('Error changing language:', error);
+			// Revert on error
+			language.set(currentLanguage === 'ru' ? 'en' : 'ru');
 			alert('Failed to change language');
 		} finally {
 			loading = false;
@@ -51,4 +69,5 @@
 		transform: scale(1.1);
 	}
 </style>
+
 

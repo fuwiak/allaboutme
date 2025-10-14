@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
+	import { t } from '$lib/i18n';
 	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 	import RestartButton from '$lib/components/RestartButton.svelte';
 
@@ -70,12 +71,12 @@
 				</div>
 				<nav class="flex items-center gap-6">
 					<a href="/dashboard" class="text-gray-300 hover:text-white transition-colors"
-						>Dashboard</a
+						>{$t('nav.dashboard')}</a
 					>
-					<a href="/drafts" class="text-gray-300 hover:text-white transition-colors">Drafts</a>
-					<a href="/publish" class="text-gray-300 hover:text-white transition-colors">Publish</a>
-					<a href="/automation" class="text-gray-300 hover:text-white transition-colors">Automation</a>
-					<a href="/settings" class="text-white font-semibold">Settings</a>
+					<a href="/drafts" class="text-gray-300 hover:text-white transition-colors">{$t('nav.drafts')}</a>
+					<a href="/publish" class="text-gray-300 hover:text-white transition-colors">{$t('nav.publish')}</a>
+					<a href="/automation" class="text-gray-300 hover:text-white transition-colors">{$t('nav.automation')}</a>
+					<a href="/settings" class="text-white font-semibold">{$t('nav.settings')}</a>
 					<LanguageSwitcher />
 					<button
 						on:click={logout}

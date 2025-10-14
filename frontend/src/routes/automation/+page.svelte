@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
+	import { t } from '$lib/i18n';
 	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 	import RestartButton from '$lib/components/RestartButton.svelte';
 
@@ -164,11 +165,11 @@
 					<h1 class="text-2xl font-bold text-white">AllAboutMe</h1>
 				</div>
 				<nav class="flex items-center gap-6">
-					<a href="/dashboard" class="text-gray-300 hover:text-white transition-colors">Dashboard</a>
-					<a href="/drafts" class="text-gray-300 hover:text-white transition-colors">Drafts</a>
-					<a href="/publish" class="text-gray-300 hover:text-white transition-colors">Publish</a>
-					<a href="/automation" class="text-white font-semibold">Automation</a>
-					<a href="/settings" class="text-gray-300 hover:text-white transition-colors">Settings</a>
+					<a href="/dashboard" class="text-gray-300 hover:text-white transition-colors">{$t('nav.dashboard')}</a>
+					<a href="/drafts" class="text-gray-300 hover:text-white transition-colors">{$t('nav.drafts')}</a>
+					<a href="/publish" class="text-gray-300 hover:text-white transition-colors">{$t('nav.publish')}</a>
+					<a href="/automation" class="text-white font-semibold">{$t('nav.automation')}</a>
+					<a href="/settings" class="text-gray-300 hover:text-white transition-colors">{$t('nav.settings')}</a>
 					<LanguageSwitcher />
 					<button on:click={logout} class="text-red-300 hover:text-red-200 transition-colors text-sm">
 						Logout

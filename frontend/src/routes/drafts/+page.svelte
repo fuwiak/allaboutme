@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
+	import { t } from '$lib/i18n';
 	import ScriptCard from '$lib/components/ScriptCard.svelte';
 	import VideoCard from '$lib/components/VideoCard.svelte';
 	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
@@ -64,12 +65,12 @@
 				</div>
 				<nav class="flex items-center gap-6">
 					<a href="/dashboard" class="text-gray-300 hover:text-white transition-colors"
-						>Dashboard</a
+						>{$t('nav.dashboard')}</a
 					>
-					<a href="/drafts" class="text-white font-semibold">Drafts</a>
-					<a href="/publish" class="text-gray-300 hover:text-white transition-colors">Publish</a>
-					<a href="/automation" class="text-gray-300 hover:text-white transition-colors">Automation</a>
-					<a href="/settings" class="text-gray-300 hover:text-white transition-colors">Settings</a>
+					<a href="/drafts" class="text-white font-semibold">{$t('nav.drafts')}</a>
+					<a href="/publish" class="text-gray-300 hover:text-white transition-colors">{$t('nav.publish')}</a>
+					<a href="/automation" class="text-gray-300 hover:text-white transition-colors">{$t('nav.automation')}</a>
+					<a href="/settings" class="text-gray-300 hover:text-white transition-colors">{$t('nav.settings')}</a>
 					<LanguageSwitcher />
 					<button
 						on:click={logout}
@@ -93,7 +94,7 @@
 						? 'bg-purple-600 text-white' 
 						: 'text-gray-300 hover:bg-white/5'} flex-1 px-6 py-4 text-center font-semibold transition-all"
 				>
-					📝 Scripts ({scripts.length})
+					📝 {$t('common.loading').includes('...') ? 'Scripts' : 'Скрипты'} ({scripts.length})
 				</button>
 				<button
 					on:click={() => (activeTab = 'videos')}
@@ -101,7 +102,7 @@
 						? 'bg-purple-600 text-white' 
 						: 'text-gray-300 hover:bg-white/5'} flex-1 px-6 py-4 text-center font-semibold transition-all"
 				>
-					🎥 Videos ({videos.length})
+					🎥 {$t('common.loading').includes('...') ? 'Videos' : 'Видео'} ({videos.length})
 				</button>
 			</div>
 
@@ -110,7 +111,7 @@
 				{#if loading}
 					<div class="text-center py-12">
 						<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
-						<p class="text-gray-300 mt-4">Loading...</p>
+						<p class="text-gray-300 mt-4">{$t('common.loading')}</p>
 					</div>
 				{:else if activeTab === 'scripts'}
 					{#if scripts.length === 0}

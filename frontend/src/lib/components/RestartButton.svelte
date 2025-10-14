@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
+	
 	let isRestarting = false;
 
 	async function handleRestart() {
@@ -41,7 +43,7 @@
 >
 	{#if isRestarting}
 		<div class="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
-		<span class="text-sm font-medium text-white">Restarting...</span>
+		<span class="text-sm font-medium text-white">{$t('common.loading').includes('...') ? 'Restarting...' : 'Перезапуск...'}</span>
 	{:else}
 		<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 			<path
@@ -51,7 +53,7 @@
 				d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
 			/>
 		</svg>
-		<span class="text-sm font-medium text-white">Restart</span>
+		<span class="text-sm font-medium text-white">{$t('common.restart')}</span>
 	{/if}
 </button>
 
@@ -61,4 +63,5 @@
 		transition: transform 0.3s ease;
 	}
 </style>
+
 
