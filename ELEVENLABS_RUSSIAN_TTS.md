@@ -17,20 +17,20 @@ Tests **3 beautiful Russian voices** with **8-second text limit** for esoteric c
 
 ### 1. Set API Key
 
-Check your `.env` file:
+The script automatically loads from `backend/.env` file.
+
+**Check if key exists:**
 ```bash
 cat backend/.env | grep ELEVEN
 ```
 
-Should see:
-```
-ELEVENLABS_API_KEY=your-key-here
+**If not found, add to `backend/.env`:**
+```bash
+echo 'ELEVENLABS_API_KEY=your-key-here' >> backend/.env
 ```
 
-Or set manually:
-```bash
-export ELEVENLABS_API_KEY='your-key-here'
-```
+**Get your key from:**
+https://elevenlabs.io/app/settings/api-keys
 
 ### 2. Run Test
 
