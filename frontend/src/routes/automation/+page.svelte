@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
+	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+	import RestartButton from '$lib/components/RestartButton.svelte';
 
 	let automationEnabled = false;
 	let pendingPosts = 0;
@@ -10,6 +12,16 @@
 	let languages: any[] = [];
 	let logs: any[] = [];
 	let loading = true;
+	
+	// Schedule settings
+	let scheduleSettings = {
+		post_interval_minutes: 30,
+		start_hour: 7,
+		end_hour: 24,
+		min_posts_per_day: 10,
+		max_posts_per_day: 15
+	};
+	let savingSchedule = false;
 
 	onMount(async () => {
 		const token = localStorage.getItem('auth_token');
@@ -24,7 +36,7 @@
 	async function loadData() {
 		loading = true;
 		try {
-			const [status, langs, logsData] = await Promise.all([
+			const [status, langs, logsData, settings] = await Promise.all([
 				fetch('/api/automation/status', {
 					headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
 				}).then(r => r.json()),
@@ -33,7 +45,8 @@
 				}).then(r => r.json()),
 				fetch('/api/automation/logs?limit=20', {
 					headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-				}).then(r => r.json())
+				}).then(r => r.json()),
+				api.getSettings()
 			]);
 
 			automationEnabled = status.enabled;
@@ -44,6 +57,13 @@
 			currentLanguage = languages.find((l: any) => l.is_active)?.code || 'ru';
 
 			logs = logsData.logs;
+			
+			// Load schedule settings from backend
+			if (settings.post_interval_minutes) scheduleSettings.post_interval_minutes = parseInt(settings.post_interval_minutes) || 30;
+			if (settings.start_hour) scheduleSettings.start_hour = parseInt(settings.start_hour) || 7;
+			if (settings.end_hour) scheduleSettings.end_hour = parseInt(settings.end_hour) || 24;
+			if (settings.min_posts_per_day) scheduleSettings.min_posts_per_day = parseInt(settings.min_posts_per_day) || 10;
+			if (settings.max_posts_per_day) scheduleSettings.max_posts_per_day = parseInt(settings.max_posts_per_day) || 15;
 		} catch (error) {
 			console.error('Error loading automation data:', error);
 		} finally {
@@ -80,6 +100,53 @@
 			alert(`Error: ${error.message}`);
 		}
 	}
+	
+	async function saveScheduleSettings() {
+		savingSchedule = true;
+		try {
+			// Validate settings
+			if (scheduleSettings.start_hour < 0 || scheduleSettings.start_hour > 23) {
+				alert('Start hour must be between 0-23');
+				savingSchedule = false;
+				return;
+			}
+			if (scheduleSettings.end_hour < 1 || scheduleSettings.end_hour > 24) {
+				alert('End hour must be between 1-24');
+				savingSchedule = false;
+				return;
+			}
+			if (scheduleSettings.start_hour >= scheduleSettings.end_hour) {
+				alert('Start hour must be before end hour');
+				savingSchedule = false;
+				return;
+			}
+			if (scheduleSettings.post_interval_minutes < 5) {
+				alert('Interval must be at least 5 minutes');
+				savingSchedule = false;
+				return;
+			}
+			if (scheduleSettings.min_posts_per_day > scheduleSettings.max_posts_per_day) {
+				alert('Min posts must be ≤ max posts');
+				savingSchedule = false;
+				return;
+			}
+			
+			// Save to backend
+			await api.updateSettings({
+				post_interval_minutes: scheduleSettings.post_interval_minutes.toString(),
+				start_hour: scheduleSettings.start_hour.toString(),
+				end_hour: scheduleSettings.end_hour.toString(),
+				min_posts_per_day: scheduleSettings.min_posts_per_day.toString(),
+				max_posts_per_day: scheduleSettings.max_posts_per_day.toString()
+			});
+			
+			alert('✅ Schedule settings saved!');
+		} catch (error: any) {
+			alert(`Error: ${error.message}`);
+		} finally {
+			savingSchedule = false;
+		}
+	}
 
 	function logout() {
 		localStorage.removeItem('auth_token');
@@ -92,13 +159,17 @@
 	<header class="bg-black/30 backdrop-blur-md border-b border-white/10">
 		<div class="container mx-auto px-6 py-4">
 			<div class="flex items-center justify-between">
-				<h1 class="text-2xl font-bold text-white">AllAboutMe</h1>
+				<div class="flex items-center gap-4">
+					<RestartButton />
+					<h1 class="text-2xl font-bold text-white">AllAboutMe</h1>
+				</div>
 				<nav class="flex items-center gap-6">
 					<a href="/dashboard" class="text-gray-300 hover:text-white transition-colors">Dashboard</a>
 					<a href="/drafts" class="text-gray-300 hover:text-white transition-colors">Drafts</a>
 					<a href="/publish" class="text-gray-300 hover:text-white transition-colors">Publish</a>
 					<a href="/automation" class="text-white font-semibold">Automation</a>
 					<a href="/settings" class="text-gray-300 hover:text-white transition-colors">Settings</a>
+					<LanguageSwitcher />
 					<button on:click={logout} class="text-red-300 hover:text-red-200 transition-colors text-sm">
 						Logout
 					</button>
@@ -147,6 +218,121 @@
 						<p class="text-3xl font-bold text-white mt-2">{publishedToday}</p>
 					</div>
 				</div>
+			</div>
+
+			<!-- Schedule Settings -->
+			<div class="bg-white/10 backdrop-blur-md rounded-lg border border-white/20 p-6 mb-6">
+				<h3 class="text-xl font-bold text-white mb-4">⏰ Настройки Расписания</h3>
+				
+				<div class="grid grid-cols-2 gap-6 mb-6">
+					<!-- Post Interval -->
+					<div>
+						<label class="block text-sm font-semibold text-gray-300 mb-2">
+							📅 Интервал между постами (минуты)
+						</label>
+						<input
+							type="number"
+							bind:value={scheduleSettings.post_interval_minutes}
+							min="5"
+							max="180"
+							class="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+						/>
+						<p class="text-xs text-gray-400 mt-1">Минимум: 5 минут</p>
+					</div>
+
+					<!-- Time Range -->
+					<div>
+						<label class="block text-sm font-semibold text-gray-300 mb-2">
+							🕐 Часы работы
+						</label>
+						<div class="flex gap-2 items-center">
+							<input
+								type="number"
+								bind:value={scheduleSettings.start_hour}
+								min="0"
+								max="23"
+								placeholder="7"
+								class="flex-1 px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+							/>
+							<span class="text-white font-bold">—</span>
+							<input
+								type="number"
+								bind:value={scheduleSettings.end_hour}
+								min="1"
+								max="24"
+								placeholder="24"
+								class="flex-1 px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+							/>
+						</div>
+						<p class="text-xs text-gray-400 mt-1">
+							С {scheduleSettings.start_hour}:00 до {scheduleSettings.end_hour}:00
+						</p>
+					</div>
+
+					<!-- Min Posts Per Day -->
+					<div>
+						<label class="block text-sm font-semibold text-gray-300 mb-2">
+							📊 Минимум постов в день
+						</label>
+						<input
+							type="number"
+							bind:value={scheduleSettings.min_posts_per_day}
+							min="1"
+							max="50"
+							class="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+						/>
+						<p class="text-xs text-gray-400 mt-1">Минимум постов для публикации</p>
+					</div>
+
+					<!-- Max Posts Per Day -->
+					<div>
+						<label class="block text-sm font-semibold text-gray-300 mb-2">
+							📈 Максимум постов в день
+						</label>
+						<input
+							type="number"
+							bind:value={scheduleSettings.max_posts_per_day}
+							min="1"
+							max="50"
+							class="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+						/>
+						<p class="text-xs text-gray-400 mt-1">Максимум постов для публикации</p>
+					</div>
+				</div>
+
+				<!-- Calculated Stats -->
+				<div class="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4 mb-4">
+					<h4 class="text-sm font-semibold text-purple-300 mb-2">📊 Рассчитанные параметры:</h4>
+					<div class="grid grid-cols-3 gap-4 text-sm">
+						<div>
+							<span class="text-gray-400">Рабочих часов:</span>
+							<span class="text-white font-bold ml-2">
+								{scheduleSettings.end_hour - scheduleSettings.start_hour} ч
+							</span>
+						</div>
+						<div>
+							<span class="text-gray-400">Постов в час:</span>
+							<span class="text-white font-bold ml-2">
+								{Math.round(60 / scheduleSettings.post_interval_minutes * 10) / 10}
+							</span>
+						</div>
+						<div>
+							<span class="text-gray-400">Макс. за день:</span>
+							<span class="text-white font-bold ml-2">
+								{Math.floor((scheduleSettings.end_hour - scheduleSettings.start_hour) * 60 / scheduleSettings.post_interval_minutes)}
+							</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- Save Button -->
+				<button
+					on:click={saveScheduleSettings}
+					disabled={savingSchedule}
+					class="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold rounded-lg transition-all disabled:cursor-not-allowed"
+				>
+					{savingSchedule ? '💾 Сохранение...' : '💾 Сохранить Расписание'}
+				</button>
 			</div>
 
 			<!-- Language Switcher -->

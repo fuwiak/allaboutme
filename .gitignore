@@ -94,6 +94,8 @@ frontend/node_modules/
 COPY_PASTE_COMMANDS.md
 EXACT_COMMANDS.txt
 RESTART_BACKEND.md
+backend/run_celery.sh
+backend/run_backend.sh
 
 # Keep backend/.env ignored
 backend/.env

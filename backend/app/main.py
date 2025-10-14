@@ -150,13 +150,15 @@ async def startup_event():
     from .storage import init_storage
     init_storage()
     
-    # Create default user if none exists
+    # Create default user and settings if none exist
     from .database import SessionLocal
     from . import models
     
     db = SessionLocal()
     try:
+        # Create default user
         user_count = db.query(models.User).count()
+        user = None
         if user_count == 0:
             # Use pre-hashed password for startup (bcrypt issue workaround)
             # Hash for "admin123" generated separately
@@ -166,9 +168,35 @@ async def startup_event():
             )
             db.add(default_user)
             db.commit()
+            db.refresh(default_user)
+            user = default_user
             logger.info("✅ Created default user: admin / admin123")
+        else:
+            user = db.query(models.User).first()
+        
+        # Create default settings if none exist
+        settings_count = db.query(models.Setting).count()
+        if settings_count == 0 and user:
+            default_settings = {
+                "daily_videos": "10",
+                "themes": "астрология, натальные карты, положение планет в знаках зодиака, нумерология, матрица судьбы, Human Design, инсайты для жизни, советы по саморазвитию",
+                "system_prompt": "Ты эксперт в эзотерических науках: астрологии, нумерологии, матрице судьбы и Human Design. Создавай короткие, мистические и поэтичные посты с глубоким смыслом.",
+                "video_length": "30",
+                "language": "ru"
+            }
+            
+            for key, value in default_settings.items():
+                setting = models.Setting(
+                    user_id=user.id,
+                    key=key,
+                    value=value
+                )
+                db.add(setting)
+            
+            db.commit()
+            logger.info("✅ Created default settings with esoteric themes")
     except Exception as e:
-        logger.error(f"Error creating default user: {e}")
+        logger.error(f"Error creating defaults: {e}")
     finally:
         db.close()
 

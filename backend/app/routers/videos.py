@@ -1,13 +1,14 @@
 """Videos CRUD router"""
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 import os
 from .. import models, schemas
 from ..database import get_db
 from ..dependencies import get_current_user
 from ..config import settings
+from ..auth import decode_access_token
 
 router = APIRouter(prefix="/api/videos", tags=["videos"])
 
@@ -48,10 +49,21 @@ def get_video(
 @router.get("/{video_id}/download")
 def download_video(
     video_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    token: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
 ):
-    """Download video file"""
+    """Download video file - requires token in query string"""
+    # Validate token
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token required")
+    
+    try:
+        payload = decode_access_token(token)
+        if not payload:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    
     video = db.query(models.Video).filter(models.Video.id == video_id).first()
     
     if not video:
@@ -70,10 +82,21 @@ def download_video(
 @router.get("/{video_id}/download-audio")
 def download_audio(
     video_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    token: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
 ):
-    """Download audio file"""
+    """Download audio file - requires token in query string"""
+    # Validate token
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token required")
+    
+    try:
+        payload = decode_access_token(token)
+        if not payload:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    
     video = db.query(models.Video).filter(models.Video.id == video_id).first()
     
     if not video:

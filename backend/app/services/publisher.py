@@ -38,6 +38,15 @@ def download_video(video_url: str) -> str:
 def _post_telegram(video_url: str, caption: str):
     """Публикация в Telegram канал."""
     try:
+        # Check if token is configured
+        if not TG_TOKEN:
+            logger.error("❌ TELEGRAM_BOT_TOKEN не настроен в .env")
+            raise Exception("Telegram bot token not configured. Please add TELEGRAM_BOT_TOKEN to .env file")
+        
+        if not TG_CHAT:
+            logger.error("❌ TG_PUBLIC_CHAT_ID не настроен в .env")
+            raise Exception("Telegram chat ID not configured. Please add TG_PUBLIC_CHAT_ID to .env file")
+        
         api = f"https://api.telegram.org/bot{TG_TOKEN}/sendVideo"
         
         # Пробуем отправить по URL

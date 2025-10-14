@@ -2,6 +2,7 @@
 import logging
 from datetime import datetime
 from celery import group
+from celery.schedules import crontab
 from .celery_app import celery_app
 from ..database import SessionLocal
 from ..models_extended import ScheduledPost, AutomationLog
@@ -166,8 +167,8 @@ def setup_periodic_tasks(sender, **kwargs):
     
     # Create daily schedule at 00:01
     sender.add_periodic_task(
-        schedule=celery_app.crontab(hour=0, minute=1),
-        sig=create_daily_schedule_task.s(),
+        crontab(hour=0, minute=1),
+        create_daily_schedule_task.s(),
         name='create-daily-schedule'
     )
     

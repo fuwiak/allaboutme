@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
+	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+	import RestartButton from '$lib/components/RestartButton.svelte';
 
 	let settings: Record<string, string> = {};
 	let loading = true;
@@ -62,14 +64,19 @@
 	<header class="bg-black/30 backdrop-blur-md border-b border-white/10">
 		<div class="container mx-auto px-6 py-4">
 			<div class="flex items-center justify-between">
-				<h1 class="text-2xl font-bold text-white">AllAboutMe</h1>
+				<div class="flex items-center gap-4">
+					<RestartButton />
+					<h1 class="text-2xl font-bold text-white">AllAboutMe</h1>
+				</div>
 				<nav class="flex items-center gap-6">
 					<a href="/dashboard" class="text-gray-300 hover:text-white transition-colors"
 						>Dashboard</a
 					>
 					<a href="/drafts" class="text-gray-300 hover:text-white transition-colors">Drafts</a>
 					<a href="/publish" class="text-gray-300 hover:text-white transition-colors">Publish</a>
+					<a href="/automation" class="text-gray-300 hover:text-white transition-colors">Automation</a>
 					<a href="/settings" class="text-white font-semibold">Settings</a>
+					<LanguageSwitcher />
 					<button
 						on:click={logout}
 						class="text-red-300 hover:text-red-200 transition-colors text-sm"
@@ -131,30 +138,40 @@
 							<input
 								type="number"
 								bind:value={settings.daily_videos}
-								class="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+								placeholder="10"
+								class="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
 							/>
+							<p class="text-xs text-gray-400 mt-1">Количество видео для генерации в день</p>
 						</div>
 
 						<div>
 							<label class="block text-sm font-semibold text-gray-300 mb-2">
-								Themes (comma-separated)
+								Themes / Темы (comma-separated)
 							</label>
 							<textarea
 								bind:value={settings.themes}
-								rows="3"
-								class="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+								rows="4"
+								placeholder="астрология, натальные карты, положение планет в знаках зодиака, нумерология, матрица судьбы, Human Design, инсайты для жизни, советы по саморазвитию"
+								class="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
 							/>
+							<p class="text-xs text-gray-400 mt-1">
+								🔮 Темы: астрология, натальные карты, положение планет, нумерология, матрица судьбы, Human Design, инсайты и советы
+							</p>
 						</div>
 
 						<div>
 							<label class="block text-sm font-semibold text-gray-300 mb-2">
-								System Prompt
+								System Prompt / Системный промпт
 							</label>
 							<textarea
 								bind:value={settings.system_prompt}
-								rows="4"
-								class="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+								rows="5"
+								placeholder="Ты эксперт в эзотерических науках: астрологии, нумерологии, матрице судьбы и Human Design. Создавай короткие, мистические и поэтичные посты с глубоким смыслом."
+								class="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
 							/>
+							<p class="text-xs text-gray-400 mt-1">
+								✨ Инструкция для AI: создавай мистические, поэтичные посты об эзотерике
+							</p>
 						</div>
 
 						<div>

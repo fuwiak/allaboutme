@@ -8,9 +8,9 @@ echo "📦 Running database migrations..."
 cd backend
 alembic upgrade head
 
-# Start Celery worker in background
-echo "🔄 Starting Celery worker..."
-celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2 &
+# Start Celery worker with Beat in background
+echo "🔄 Starting Celery worker with Beat scheduler..."
+celery -A app.tasks.celery_app worker --beat --loglevel=info --concurrency=2 &
 
 # Start FastAPI with uvicorn
 echo "🌐 Starting FastAPI server..."

@@ -3,6 +3,8 @@
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
 	import VideoCard from '$lib/components/VideoCard.svelte';
+	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+	import RestartButton from '$lib/components/RestartButton.svelte';
 
 	let videos: any[] = [];
 	let loading = true;
@@ -52,14 +54,19 @@
 	<header class="bg-black/30 backdrop-blur-md border-b border-white/10">
 		<div class="container mx-auto px-6 py-4">
 			<div class="flex items-center justify-between">
-				<h1 class="text-2xl font-bold text-white">AllAboutMe</h1>
+				<div class="flex items-center gap-4">
+					<RestartButton />
+					<h1 class="text-2xl font-bold text-white">AllAboutMe</h1>
+				</div>
 				<nav class="flex items-center gap-6">
 					<a href="/dashboard" class="text-gray-300 hover:text-white transition-colors"
 						>Dashboard</a
 					>
 					<a href="/drafts" class="text-gray-300 hover:text-white transition-colors">Drafts</a>
 					<a href="/publish" class="text-white font-semibold">Publish</a>
+					<a href="/automation" class="text-gray-300 hover:text-white transition-colors">Automation</a>
 					<a href="/settings" class="text-gray-300 hover:text-white transition-colors">Settings</a>
+					<LanguageSwitcher />
 					<button
 						on:click={logout}
 						class="text-red-300 hover:text-red-200 transition-colors text-sm"
