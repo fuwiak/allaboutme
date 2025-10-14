@@ -122,13 +122,13 @@ app.include_router(settings_router.router)
 # Serve static files (SvelteKit build)
 static_path = Path(__file__).parent / "static"
 if static_path.exists():
-    # Mount assets directory only if it exists
-    assets_path = static_path / "assets"
-    if assets_path.exists():
-        app.mount("/assets", StaticFiles(directory=str(assets_path)), name="assets")
-        logger.info(f"✅ Mounted static assets from {assets_path}")
+    # Mount _app directory for SvelteKit assets
+    app_path = static_path / "_app"
+    if app_path.exists():
+        app.mount("/_app", StaticFiles(directory=str(app_path)), name="app_assets")
+        logger.info(f"✅ Mounted SvelteKit _app from {app_path}")
     else:
-        logger.warning(f"⚠️  Assets directory not found: {assets_path}")
+        logger.warning(f"⚠️  _app directory not found: {app_path}")
     
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
