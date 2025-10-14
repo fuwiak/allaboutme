@@ -26,34 +26,42 @@ def test_connection():
     except Exception as e:
         print(f"❌ Failed without SSL: {e}")
     
-    # Test 2: With sslmode=require
+    # Test 2: With sslmode=require (only if not already present)
     print("\nTest 2: With sslmode=require")
-    separator = "&" if "?" in base_url else "?"
-    url_with_ssl = f"{base_url}{separator}sslmode=require"
+    if "sslmode" in base_url:
+        print("   (sslmode already in URL, using as-is)")
+        url_with_ssl = base_url
+    else:
+        separator = "&" if "?" in base_url else "?"
+        url_with_ssl = f"{base_url}{separator}sslmode=require"
     
     try:
         engine = create_engine(url_with_ssl, pool_pre_ping=True)
         with engine.connect() as conn:
             result = conn.execute(text("SELECT 1"))
             print("✅ Connection successful (with SSL)!")
-            print(f"   Use this URL: {url_with_ssl[:80]}...")
+            print(f"   URL works: {url_with_ssl[:80]}...")
             return True
     except Exception as e:
-        print(f"❌ Failed with sslmode=require: {e}")
+        print(f"❌ Failed with SSL: {e}")
     
-    # Test 3: With sslmode=prefer
+    # Test 3: With sslmode=prefer (only if not already present)
     print("\nTest 3: With sslmode=prefer")
-    url_prefer = f"{base_url}{separator}sslmode=prefer"
-    
-    try:
-        engine = create_engine(url_prefer, pool_pre_ping=True)
-        with engine.connect() as conn:
-            result = conn.execute(text("SELECT 1"))
-            print("✅ Connection successful (with prefer)!")
-            print(f"   Use this URL: {url_prefer[:80]}...")
-            return True
-    except Exception as e:
-        print(f"❌ Failed with sslmode=prefer: {e}")
+    if "sslmode" in base_url:
+        print("   (sslmode already in URL, skipping)")
+    else:
+        separator = "&" if "?" in base_url else "?"
+        url_prefer = f"{base_url}{separator}sslmode=prefer"
+        
+        try:
+            engine = create_engine(url_prefer, pool_pre_ping=True)
+            with engine.connect() as conn:
+                result = conn.execute(text("SELECT 1"))
+                print("✅ Connection successful (with prefer)!")
+                print(f"   URL works: {url_prefer[:80]}...")
+                return True
+        except Exception as e:
+            print(f"❌ Failed with prefer: {e}")
     
     print("\n❌ All connection attempts failed!")
     print("\n🔍 Check:")
