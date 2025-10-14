@@ -30,6 +30,11 @@ COPY backend/ ./backend/
 # Copy frontend build to backend static directory
 COPY --from=frontend-build /app/frontend/build ./backend/app/static
 
+# Debug: List what was copied
+RUN echo "📦 Frontend build contents:" && \
+    ls -la ./backend/app/static/ || echo "No static dir" && \
+    ls -la ./backend/app/static/assets/ 2>/dev/null || echo "No assets dir"
+
 # Create storage directories
 RUN mkdir -p /storage/videos /storage/audio /storage/backgrounds
 

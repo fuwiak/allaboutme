@@ -144,7 +144,25 @@ if static_path.exists():
         if index_path.exists():
             return FileResponse(index_path)
         
-        return {"message": "Frontend not built yet"}
+        # Frontend not built - return helpful message
+        return {
+            "message": "AllAboutMe API is running!",
+            "frontend": "Not built yet - use /docs for API",
+            "docs": "/docs",
+            "health": "/health"
+        }
+else:
+    # No static directory at all - API only mode
+    @app.get("/")
+    async def root():
+        """API root when no frontend"""
+        return {
+            "message": "AllAboutMe API",
+            "version": "1.0.0",
+            "docs": "/docs",
+            "health": "/health",
+            "note": "Frontend not available - API only"
+        }
 
 
 @app.on_event("startup")
