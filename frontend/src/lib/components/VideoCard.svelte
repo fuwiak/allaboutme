@@ -17,7 +17,7 @@
 	
 	onMount(() => {
 		if (browser) {
-			token = localStorage.getItem('token') || '';
+			token = localStorage.getItem('auth_token') || '';
 			console.log('[VideoCard] Token loaded:', token ? `${token.substring(0, 20)}...` : 'EMPTY');
 		}
 	});

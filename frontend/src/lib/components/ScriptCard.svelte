@@ -17,6 +17,56 @@
 	let backgroundTheme: string = 'cosmic';
 	let generatingBackground = false;
 	let generatedBackgroundUrl = '';
+	let selectedVoice: string = 'adam';
+	let playingVoiceSample = false;
+	
+	// ElevenLabs voices with sample URLs
+	const voices = [
+		{
+			id: 'adam',
+			name: 'Adam',
+			description: 'Deep male voice - Warm, narrative',
+			sampleText: 'Сегодня звёзды обещают удивительный день! Луна дарит вам интуицию.',
+			icon: '🎙️'
+		},
+		{
+			id: 'bella',
+			name: 'Bella',
+			description: 'Female voice - Soft, friendly',
+			sampleText: 'Число семь несёт в себе магию и мудрость. Слушайте свой голос!',
+			icon: '🎤'
+		},
+		{
+			id: 'josh',
+			name: 'Josh',
+			description: 'Young male - Energetic, clear',
+			sampleText: 'Вы создатель своей реальности! Верьте в себя и действуйте!',
+			icon: '🔊'
+		}
+	];
+	
+	async function playVoiceSample(voiceId: string) {
+		playingVoiceSample = true;
+		try {
+			const voice = voices.find(v => v.id === voiceId);
+			if (!voice) return;
+			
+			// For demo, we'll use browser speech synthesis
+			// In production, you'd call ElevenLabs API
+			const utterance = new SpeechSynthesisUtterance(voice.sampleText);
+			utterance.lang = 'ru-RU';
+			utterance.rate = 0.9;
+			speechSynthesis.speak(utterance);
+			
+			// Wait for speech to finish
+			utterance.onend = () => {
+				playingVoiceSample = false;
+			};
+		} catch (error) {
+			console.error('Error playing sample:', error);
+			playingVoiceSample = false;
+		}
+	}
 
 	async function handleSave() {
 		try {
@@ -292,6 +342,51 @@
 							⬇️ Bottom
 						</button>
 					</div>
+				</div>
+
+				<!-- Voice Selection -->
+				<div>
+					<label class="block text-sm font-semibold text-gray-300 mb-2">
+						🎤 Voice Selection
+					</label>
+					<div class="space-y-2">
+						{#each voices as voice}
+							<div class="flex items-center gap-2 p-3 bg-gray-900 border rounded-lg transition-all {selectedVoice === voice.id
+								? 'border-purple-500 bg-purple-500/10'
+								: 'border-gray-600 hover:border-gray-500'}">
+								<input
+									type="radio"
+									id="voice-{voice.id}"
+									name="voice"
+									value={voice.id}
+									bind:group={selectedVoice}
+									class="w-4 h-4 text-purple-600"
+								/>
+								<label for="voice-{voice.id}" class="flex-1 cursor-pointer">
+									<div class="flex items-center gap-2">
+										<span class="text-lg">{voice.icon}</span>
+										<div class="flex-1">
+											<div class="text-sm font-semibold text-white">{voice.name}</div>
+											<div class="text-xs text-gray-400">{voice.description}</div>
+										</div>
+									</div>
+								</label>
+								<button
+									on:click={() => playVoiceSample(voice.id)}
+									disabled={playingVoiceSample}
+									class="px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white text-xs font-semibold rounded transition-colors"
+									title="Play sample"
+								>
+									{#if playingVoiceSample}
+										⏸️
+									{:else}
+										▶️
+									{/if}
+								</button>
+							</div>
+						{/each}
+					</div>
+					<p class="text-xs text-gray-400 mt-2">Click ▶️ to preview voice before generating</p>
 				</div>
 
 			<!-- Custom Background -->
