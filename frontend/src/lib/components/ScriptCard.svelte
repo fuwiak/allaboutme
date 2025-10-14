@@ -14,6 +14,9 @@
 	let currentTaskId = '';
 	let textPosition: 'top' | 'center' | 'bottom' = 'center';
 	let showVideoSettings = false;
+	let backgroundTheme: string = 'cosmic';
+	let generatingBackground = false;
+	let generatedBackgroundUrl = '';
 
 	async function handleSave() {
 		try {
@@ -80,6 +83,45 @@
 		} catch (error) {
 			alert(`Error stopping video: ${error}`);
 		}
+	}
+
+	async function generateBackground() {
+		generatingBackground = true;
+		try {
+			const response = await fetch(
+				`https://image.pollinations.ai/prompt/${encodeURIComponent(getPromptForTheme(backgroundTheme))}?width=1920&height=1080&nologo=true`,
+				{ method: 'GET' }
+			);
+			
+			if (!response.ok) throw new Error('Failed to generate image');
+			
+			const blob = await response.blob();
+			const file = new File([blob], `${backgroundTheme}_background.png`, { type: 'image/png' });
+			
+			// Upload to backend
+			const result = await api.uploadBackground(file);
+			generatedBackgroundUrl = `/api/backgrounds/${result.filename}`;
+			alert(`✅ Background generated: ${backgroundTheme}`);
+		} catch (error) {
+			alert(`Error generating background: ${error}`);
+		} finally {
+			generatingBackground = false;
+		}
+	}
+
+	function getPromptForTheme(theme: string): string {
+		const prompts: Record<string, string> = {
+			cosmic: 'Deep space cosmos, nebula colors, spiritual universe, infinite energy, celestial beauty, mystical stars, high quality',
+			astrology: 'Mystical zodiac wheel with all 12 signs, cosmic background, stars, planets, ethereal glow, spiritual art, high quality',
+			numerology: 'Sacred numerology symbols, golden numbers 1-9 in mystical circle, divine geometry, spiritual energy, cosmic background',
+			matrix: 'Destiny matrix energy map, sacred geometry, chakra colors, spiritual pathways, mystical symbols, glowing mandala',
+			human_design: 'Human Design body graph, energy centers, spiritual diagram, colorful chakras, cosmic consciousness, mystical blueprint',
+			motivation: 'Inspiring cosmic energy, spiritual awakening, golden light, universe connection, meditation vibes, peaceful atmosphere',
+			moon: 'Mystical moon phases, intuitive wisdom, celestial magic, spiritual feminine energy, night sky, stars, ethereal glow',
+			tarot: 'Mystical tarot cards spread, divine symbols, spiritual guidance, cosmic wisdom, ethereal art, magical atmosphere',
+			chakras: 'Seven colorful chakras energy centers, spiritual alignment, cosmic healing, rainbow aura, divine light'
+		};
+		return prompts[theme] || prompts.cosmic;
 	}
 
 	async function handleDelete() {
@@ -205,11 +247,11 @@
 <!-- Video Settings Modal -->
 {#if showVideoSettings}
 	<div
-		class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-40"
+		class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start justify-center z-40 pt-20 overflow-y-auto"
 		on:click={() => (showVideoSettings = false)}
 	>
 		<div
-			class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-md mx-4 p-6"
+			class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-md mx-4 p-6 my-4"
 			on:click|stopPropagation
 		>
 			<h3 class="text-xl font-bold text-white mb-4">🎬 Video Settings</h3>
@@ -248,11 +290,51 @@
 					</div>
 				</div>
 
-				<!-- Upload Background -->
+			<!-- Custom Background -->
+			<div>
+				<label class="block text-sm font-semibold text-gray-300 mb-2">
+					🖼️ Custom Background (Optional)
+				</label>
+				
+				<!-- Theme Selector -->
+				<div class="mb-3">
+					<label class="block text-xs text-gray-400 mb-2">✨ Generate AI Background:</label>
+					<div class="flex gap-2">
+						<select
+							bind:value={backgroundTheme}
+							class="flex-1 px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white text-sm"
+						>
+							<option value="cosmic">🌌 Cosmic</option>
+							<option value="astrology">🔮 Astrology</option>
+							<option value="numerology">🔢 Numerology</option>
+							<option value="matrix">💎 Destiny Matrix</option>
+							<option value="human_design">🎨 Human Design</option>
+							<option value="motivation">✨ Motivation</option>
+							<option value="moon">🌙 Moon</option>
+							<option value="tarot">🃏 Tarot</option>
+							<option value="chakras">⚡ Chakras</option>
+						</select>
+						<button
+							on:click={generateBackground}
+							disabled={generatingBackground}
+							class="px-4 py-2 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-lg transition-all text-sm"
+						>
+							{#if generatingBackground}
+								<span class="flex items-center gap-2">
+									<div class="animate-spin rounded-full h-3 w-3 border-2 border-white/30 border-t-white"></div>
+									Generating...
+								</span>
+							{:else}
+								🎨 Generate
+							{/if}
+						</button>
+					</div>
+					<p class="text-xs text-gray-400 mt-1">Free AI generation via Pollinations.ai</p>
+				</div>
+				
+				<!-- Upload File -->
 				<div>
-					<label class="block text-sm font-semibold text-gray-300 mb-2">
-						🖼️ Custom Background (Optional)
-					</label>
+					<label class="block text-xs text-gray-400 mb-2">📁 Or Upload Your Own:</label>
 					<input
 						type="file"
 						accept="image/*"
@@ -267,10 +349,19 @@
 								}
 							}
 						}}
-						class="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-purple-600 file:text-white hover:file:bg-purple-700"
+						class="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-purple-600 file:text-white hover:file:bg-purple-700"
 					/>
 					<p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF, WebP (max 10MB)</p>
 				</div>
+				
+				<!-- Preview Generated Background -->
+				{#if generatedBackgroundUrl}
+					<div class="mt-3">
+						<img src={generatedBackgroundUrl} alt="Generated background" class="w-full h-32 object-cover rounded-lg border-2 border-green-500" />
+						<p class="text-xs text-green-400 mt-1">✅ Background ready</p>
+					</div>
+				{/if}
+			</div>
 			</div>
 
 			<div class="flex gap-3">

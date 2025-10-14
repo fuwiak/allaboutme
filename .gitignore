@@ -101,3 +101,8 @@ backend/run_backend.sh
 # Keep backend/.env ignored
 backend/.env
 .env
+
+# Generated test images
+generated_images/
+test_image_generation.py
+test_qwen_vision.py

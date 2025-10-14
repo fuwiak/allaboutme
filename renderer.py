@@ -294,8 +294,8 @@ def wait_video(video_id: str, timeout=900, progress_callback=None) -> str:
             if status == "completed":
                 video_url = data.get("video_url") or data.get("url")
                 if video_url:
-                    logger.info(f"✅ Видео готово: {video_url}")
-                    return video_url
+                logger.info(f"✅ Видео готово: {video_url}")
+                return video_url
                 else:
                     logger.error(f"❌ Видео завершено, но URL не найден: {data}")
                     raise ValueError("Video completed but no URL provided")
@@ -327,7 +327,7 @@ def render_video(script: str, progress_callback=None) -> str:
         
         # Пробуем HeyGen
         try:
-            video_id = submit_to_heygen(script)
+        video_id = submit_to_heygen(script)
             video_url = wait_video(video_id, progress_callback=progress_callback)
             logger.info(f"✅ HeyGen видео создано: {video_url}")
             return video_url
@@ -343,7 +343,7 @@ def render_video(script: str, progress_callback=None) -> str:
                     from opensource_video import render_video_opensource
                     video_url = render_video_opensource(script, progress_callback)
                     logger.info(f"✅ Open-source видео создано: {video_url}")
-                    return video_url
+        return video_url
                 except ImportError:
                     logger.error("❌ Модуль opensource_video не найден")
                     logger.info("💡 Установите зависимости: pip install moviepy gtts pillow")

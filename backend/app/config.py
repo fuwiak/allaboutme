@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     HEYGEN_API_KEY: Optional[str] = os.getenv("HEYGEN_API_KEY")
     HEYGEN_TEMPLATE_ID: Optional[str] = os.getenv("HEYGEN_TEMPLATE_ID")
     HEYGEN_AVATAR_ID: Optional[str] = os.getenv("HEYGEN_AVATAR_ID")
+    OPENROUTER_API_KEY: Optional[str] = os.getenv("OPENROUTER_API_KEY")
     
     # Telegram
     TELEGRAM_BOT_TOKEN: Optional[str] = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -49,6 +50,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignore extra fields in .env
 
 
 settings = Settings()
