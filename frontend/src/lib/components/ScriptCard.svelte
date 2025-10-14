@@ -17,75 +17,43 @@
 	let backgroundTheme: string = 'cosmic';
 	let generatingBackground = false;
 	let generatedBackgroundUrl = '';
-	let selectedVoice: string = 'adam'; // Adam by default
+	let selectedVoice: string = 'pNInz6obpgDQGcFmaJgB'; // Adam by default
 	let playingVoiceSample = false;
 	
-	// Voice options with different characteristics
+	// ElevenLabs voices - using pre-generated samples
 	const voices = [
 		{
-			id: 'adam',
+			id: 'pNInz6obpgDQGcFmaJgB',
 			name: 'Adam',
 			description: 'Deep male - Warm, narrative',
-			sampleText: 'Сегодня звёзды обещают удивительный день! Луна дарит интуицию.',
-			pitch: 0.8,
-			rate: 0.9,
+			sampleFile: '/voice-samples/adam.mp3',
 			icon: '🎙️'
 		},
 		{
-			id: 'bella',
+			id: 'EXAVITQu4vr4xnSDxMaL',
 			name: 'Bella',
 			description: 'Female - Soft, friendly',
-			sampleText: 'Число семь несёт магию и мудрость. Слушайте свой голос!',
-			pitch: 1.2,
-			rate: 0.95,
+			sampleFile: '/voice-samples/bella.mp3',
 			icon: '🎤'
 		},
 		{
-			id: 'josh',
+			id: 'TxGEqnHWrfWFTfGW9XjX',
 			name: 'Josh',
 			description: 'Young male - Energetic',
-			sampleText: 'Вы создатель реальности! Верьте в себя и действуйте!',
-			pitch: 1.1,
-			rate: 1.05,
+			sampleFile: '/voice-samples/josh.mp3',
 			icon: '🔊'
-		},
-		{
-			id: 'natasha',
-			name: 'Natasha',
-			description: 'Female - Calm, wise',
-			sampleText: 'Ваша матрица судьбы активна. Раскройте свои таланты!',
-			pitch: 1.15,
-			rate: 0.85,
-			icon: '💫'
-		},
-		{
-			id: 'dmitri',
-			name: 'Dmitri',
-			description: 'Male - Strong, confident',
-			sampleText: 'Генераторы полны энергии! Следуйте своему отклику!',
-			pitch: 0.85,
-			rate: 0.92,
-			icon: '⚡'
-		},
-		{
-			id: 'olga',
-			name: 'Olga',
-			description: 'Female - Gentle, inspiring',
-			sampleText: 'Каждая мысль формирует будущее. Действуйте с любовью!',
-			pitch: 1.25,
-			rate: 0.88,
-			icon: '✨'
 		}
 	];
 	
-	let currentSpeech: SpeechSynthesisUtterance | null = null;
+	let currentAudio: HTMLAudioElement | null = null;
 	
 	async function playVoiceSample(voiceId: string) {
 		try {
-			// Stop any currently playing speech
-			if (currentSpeech) {
-				speechSynthesis.cancel();
-				currentSpeech = null;
+			// Stop any currently playing audio
+			if (currentAudio) {
+				currentAudio.pause();
+				currentAudio.currentTime = 0;
+				currentAudio = null;
 			}
 			
 			const voice = voices.find(v => v.id === voiceId);
@@ -93,37 +61,28 @@
 			
 			playingVoiceSample = true;
 			
-			// Create speech utterance with custom settings
-			currentSpeech = new SpeechSynthesisUtterance(voice.sampleText);
-			currentSpeech.lang = 'ru-RU';
-			currentSpeech.pitch = voice.pitch;
-			currentSpeech.rate = voice.rate;
-			currentSpeech.volume = 0.9;
+			// Play pre-generated ElevenLabs sample
+			currentAudio = new Audio(voice.sampleFile);
+			currentAudio.volume = 0.9;
 			
-			// Try to use Russian voice if available
-			const availableVoices = speechSynthesis.getVoices();
-			const russianVoice = availableVoices.find(v => v.lang.startsWith('ru'));
-			if (russianVoice) {
-				currentSpeech.voice = russianVoice;
-			}
-			
-			currentSpeech.onend = () => {
+			currentAudio.onended = () => {
 				playingVoiceSample = false;
-				currentSpeech = null;
+				currentAudio = null;
 			};
 			
-			currentSpeech.onerror = (e) => {
+			currentAudio.onerror = (e) => {
 				console.error('Error playing sample:', e);
 				playingVoiceSample = false;
-				currentSpeech = null;
+				currentAudio = null;
+				alert(`Failed to load ${voice.name} sample. Try regenerating voice samples.`);
 			};
 			
-			speechSynthesis.speak(currentSpeech);
+			await currentAudio.play();
 			
 		} catch (error) {
 			console.error('Error playing sample:', error);
 			playingVoiceSample = false;
-			currentSpeech = null;
+			currentAudio = null;
 		}
 	}
 

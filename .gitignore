@@ -108,3 +108,7 @@ generated_audio/
 test_image_generation.py
 test_qwen_vision.py
 test_elevenlabs_russian.py
+generate_voice_samples.py
+
+# Voice samples (will be generated)
+frontend/static/voice-samples/*.mp3
