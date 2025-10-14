@@ -102,7 +102,9 @@ backend/run_backend.sh
 backend/.env
 .env
 
-# Generated test images
+# Generated test files
 generated_images/
+generated_audio/
 test_image_generation.py
 test_qwen_vision.py
+test_elevenlabs_russian.py
