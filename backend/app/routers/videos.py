@@ -137,36 +137,30 @@ def delete_video(
     return None
 
 
-@router.get("/voice-sample/{voice_id}")
-async def get_voice_sample(voice_id: str):
-    """Get ElevenLabs voice sample (proxy to avoid CORS)"""
-    import requests
+@router.get("/voice-sample/{voice_name}")
+async def get_voice_sample(voice_name: str):
+    """Get voice sample - using simple audio files or TTS"""
+    from fastapi.responses import Response
     
-    # Map voice IDs to their sample URLs
+    # Sample texts in Russian for each voice
     voice_samples = {
-        "pNInz6obpgDQGcFmaJgB": "https://storage.googleapis.com/eleven-public-prod/premade/voices/pNInz6obpgDQGcFmaJgB/02c43f89-88b6-4481-aa30-577a17f41d01.mp3",
-        "EXAVITQu4vr4xnSDxMaL": "https://storage.googleapis.com/eleven-public-prod/premade/voices/EXAVITQu4vr4xnSDxMaL/04365bce-98e5-45f7-874a-933febb4ad4b.mp3",
-        "TxGEqnHWrfWFTfGW9XjX": "https://storage.googleapis.com/eleven-public-prod/premade/voices/TxGEqnHWrfWFTfGW9XjX/1155c987-1f5f-4d0c-8e1a-08b183a8b1b6.mp3"
+        "adam": "Сегодня звёзды обещают удивительный день!",
+        "bella": "Число семь несёт магию и мудрость!",
+        "josh": "Вы создатель своей реальности!",
+        "natasha": "Луна дарит вам глубокую интуицию!",
+        "dmitri": "Раскройте свои таланты и идите к цели!",
+        "olga": "Верьте в себя и действуйте с любовью!"
     }
     
-    sample_url = voice_samples.get(voice_id)
-    if not sample_url:
+    text = voice_samples.get(voice_name)
+    if not text:
         raise HTTPException(status_code=404, detail="Voice not found")
     
-    try:
-        # Fetch the audio file
-        response = requests.get(sample_url, timeout=10)
-        response.raise_for_status()
-        
-        from fastapi.responses import Response
-        return Response(
-            content=response.content,
-            media_type="audio/mpeg",
-            headers={
-                "Content-Disposition": f"inline; filename=voice_sample_{voice_id}.mp3",
-                "Cache-Control": "public, max-age=86400"  # Cache for 1 day
-            }
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch voice sample: {str(e)}")
+    # Return a simple JSON response with text for browser TTS
+    # Or in production, generate with ElevenLabs
+    return {
+        "voice": voice_name,
+        "text": text,
+        "message": "Use browser TTS or ElevenLabs API to generate audio"
+    }
 

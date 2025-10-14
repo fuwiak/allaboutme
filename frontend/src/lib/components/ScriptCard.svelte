@@ -17,39 +17,75 @@
 	let backgroundTheme: string = 'cosmic';
 	let generatingBackground = false;
 	let generatedBackgroundUrl = '';
-	let selectedVoice: string = 'pNInz6obpgDQGcFmaJgB'; // Adam by default
+	let selectedVoice: string = 'adam'; // Adam by default
 	let playingVoiceSample = false;
 	
-	// ElevenLabs voices (using backend proxy to avoid CORS)
+	// Voice options with different characteristics
 	const voices = [
 		{
-			id: 'pNInz6obpgDQGcFmaJgB',
+			id: 'adam',
 			name: 'Adam',
-			description: 'Deep male voice - Warm, narrative',
+			description: 'Deep male - Warm, narrative',
+			sampleText: 'Сегодня звёзды обещают удивительный день! Луна дарит интуицию.',
+			pitch: 0.8,
+			rate: 0.9,
 			icon: '🎙️'
 		},
 		{
-			id: 'EXAVITQu4vr4xnSDxMaL',
+			id: 'bella',
 			name: 'Bella',
-			description: 'Female voice - Soft, friendly',
+			description: 'Female - Soft, friendly',
+			sampleText: 'Число семь несёт магию и мудрость. Слушайте свой голос!',
+			pitch: 1.2,
+			rate: 0.95,
 			icon: '🎤'
 		},
 		{
-			id: 'TxGEqnHWrfWFTfGW9XjX',
+			id: 'josh',
 			name: 'Josh',
-			description: 'Young male - Energetic, clear',
+			description: 'Young male - Energetic',
+			sampleText: 'Вы создатель реальности! Верьте в себя и действуйте!',
+			pitch: 1.1,
+			rate: 1.05,
 			icon: '🔊'
+		},
+		{
+			id: 'natasha',
+			name: 'Natasha',
+			description: 'Female - Calm, wise',
+			sampleText: 'Ваша матрица судьбы активна. Раскройте свои таланты!',
+			pitch: 1.15,
+			rate: 0.85,
+			icon: '💫'
+		},
+		{
+			id: 'dmitri',
+			name: 'Dmitri',
+			description: 'Male - Strong, confident',
+			sampleText: 'Генераторы полны энергии! Следуйте своему отклику!',
+			pitch: 0.85,
+			rate: 0.92,
+			icon: '⚡'
+		},
+		{
+			id: 'olga',
+			name: 'Olga',
+			description: 'Female - Gentle, inspiring',
+			sampleText: 'Каждая мысль формирует будущее. Действуйте с любовью!',
+			pitch: 1.25,
+			rate: 0.88,
+			icon: '✨'
 		}
 	];
 	
-	let currentAudio: HTMLAudioElement | null = null;
+	let currentSpeech: SpeechSynthesisUtterance | null = null;
 	
 	async function playVoiceSample(voiceId: string) {
 		try {
-			// Stop any currently playing audio
-			if (currentAudio) {
-				currentAudio.pause();
-				currentAudio = null;
+			// Stop any currently playing speech
+			if (currentSpeech) {
+				speechSynthesis.cancel();
+				currentSpeech = null;
 			}
 			
 			const voice = voices.find(v => v.id === voiceId);
@@ -57,30 +93,37 @@
 			
 			playingVoiceSample = true;
 			
-			// Use backend proxy endpoint to avoid CORS
-			const sampleUrl = `/api/videos/voice-sample/${voiceId}`;
+			// Create speech utterance with custom settings
+			currentSpeech = new SpeechSynthesisUtterance(voice.sampleText);
+			currentSpeech.lang = 'ru-RU';
+			currentSpeech.pitch = voice.pitch;
+			currentSpeech.rate = voice.rate;
+			currentSpeech.volume = 0.9;
 			
-			currentAudio = new Audio(sampleUrl);
-			currentAudio.volume = 0.8;
+			// Try to use Russian voice if available
+			const availableVoices = speechSynthesis.getVoices();
+			const russianVoice = availableVoices.find(v => v.lang.startsWith('ru'));
+			if (russianVoice) {
+				currentSpeech.voice = russianVoice;
+			}
 			
-			currentAudio.onended = () => {
+			currentSpeech.onend = () => {
 				playingVoiceSample = false;
-				currentAudio = null;
+				currentSpeech = null;
 			};
 			
-			currentAudio.onerror = (e) => {
+			currentSpeech.onerror = (e) => {
 				console.error('Error playing sample:', e);
 				playingVoiceSample = false;
-				currentAudio = null;
-				alert(`Failed to load ${voice.name} sample. Backend might be offline.`);
+				currentSpeech = null;
 			};
 			
-			await currentAudio.play();
+			speechSynthesis.speak(currentSpeech);
 			
 		} catch (error) {
 			console.error('Error playing sample:', error);
 			playingVoiceSample = false;
-			currentAudio = null;
+			currentSpeech = null;
 		}
 	}
 
