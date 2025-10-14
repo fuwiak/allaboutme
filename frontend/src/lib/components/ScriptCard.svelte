@@ -88,19 +88,23 @@
 	async function generateBackground() {
 		generatingBackground = true;
 		try {
-			const response = await fetch(
-				`https://image.pollinations.ai/prompt/${encodeURIComponent(getPromptForTheme(backgroundTheme))}?width=1920&height=1080&nologo=true`,
-				{ method: 'GET' }
-			);
+			const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(getPromptForTheme(backgroundTheme))}?width=1920&height=1080&nologo=true`;
+			
+			const response = await fetch(imageUrl, { method: 'GET' });
 			
 			if (!response.ok) throw new Error('Failed to generate image');
 			
 			const blob = await response.blob();
 			const file = new File([blob], `${backgroundTheme}_background.png`, { type: 'image/png' });
 			
-			// Upload to backend
-			const result = await api.uploadBackground(file);
-			generatedBackgroundUrl = `/api/backgrounds/${result.filename}`;
+			// Create object URL for preview
+			generatedBackgroundUrl = URL.createObjectURL(blob);
+			
+			// Upload to backend in background
+			api.uploadBackground(file)
+				.then(result => console.log('Background uploaded:', result.filename))
+				.catch(err => console.error('Upload error:', err));
+			
 			alert(`✅ Background generated: ${backgroundTheme}`);
 		} catch (error) {
 			alert(`Error generating background: ${error}`);
