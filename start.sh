@@ -36,18 +36,18 @@ echo ""
 # Test database connection before migrations
 echo "🔍 Testing database connection..."
 cd backend
-python -c "
-from app.database import engine
-try:
-    with engine.connect() as conn:
-        print('✅ Database connection successful!')
-except Exception as e:
-    print(f'❌ Database connection failed: {e}')
-    import sys
-    sys.exit(1)
-" || {
+
+# Run comprehensive connection test
+python test_db_connection.py || {
+    echo ""
     echo "❌ Cannot connect to database!"
-    echo "Check if PostgreSQL service is running in Railway."
+    echo ""
+    echo "💡 Try this in Railway:"
+    echo "  1. Go to Postgres service → Variables"
+    echo "  2. Copy the DATABASE_URL value"
+    echo "  3. Add ?sslmode=require at the end"
+    echo "  4. Paste in app service → Variables → DATABASE_URL"
+    echo "  5. Redeploy"
     exit 1
 }
 echo ""
