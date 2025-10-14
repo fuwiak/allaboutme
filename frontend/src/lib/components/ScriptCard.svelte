@@ -358,13 +358,28 @@
 					<p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF, WebP (max 10MB)</p>
 				</div>
 				
-				<!-- Preview Generated Background -->
-				{#if generatedBackgroundUrl}
-					<div class="mt-3">
+			<!-- Preview Generated Background -->
+			{#if generatedBackgroundUrl}
+				<div class="mt-3">
+					<div class="relative">
 						<img src={generatedBackgroundUrl} alt="Generated background" class="w-full h-32 object-cover rounded-lg border-2 border-green-500" />
-						<p class="text-xs text-green-400 mt-1">✅ Background ready</p>
+						<button
+							on:click={() => {
+								// Revoke the blob URL to free memory
+								if (generatedBackgroundUrl.startsWith('blob:')) {
+									URL.revokeObjectURL(generatedBackgroundUrl);
+								}
+								generatedBackgroundUrl = '';
+							}}
+							class="absolute top-2 right-2 px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded shadow-lg transition-colors"
+							title="Clear background"
+						>
+							✕
+						</button>
 					</div>
-				{/if}
+					<p class="text-xs text-green-400 mt-1">✅ Background ready</p>
+				</div>
+			{/if}
 			</div>
 			</div>
 
