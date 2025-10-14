@@ -136,3 +136,37 @@ def delete_video(
     db.commit()
     return None
 
+
+@router.get("/voice-sample/{voice_id}")
+async def get_voice_sample(voice_id: str):
+    """Get ElevenLabs voice sample (proxy to avoid CORS)"""
+    import requests
+    
+    # Map voice IDs to their sample URLs
+    voice_samples = {
+        "pNInz6obpgDQGcFmaJgB": "https://storage.googleapis.com/eleven-public-prod/premade/voices/pNInz6obpgDQGcFmaJgB/02c43f89-88b6-4481-aa30-577a17f41d01.mp3",
+        "EXAVITQu4vr4xnSDxMaL": "https://storage.googleapis.com/eleven-public-prod/premade/voices/EXAVITQu4vr4xnSDxMaL/04365bce-98e5-45f7-874a-933febb4ad4b.mp3",
+        "TxGEqnHWrfWFTfGW9XjX": "https://storage.googleapis.com/eleven-public-prod/premade/voices/TxGEqnHWrfWFTfGW9XjX/1155c987-1f5f-4d0c-8e1a-08b183a8b1b6.mp3"
+    }
+    
+    sample_url = voice_samples.get(voice_id)
+    if not sample_url:
+        raise HTTPException(status_code=404, detail="Voice not found")
+    
+    try:
+        # Fetch the audio file
+        response = requests.get(sample_url, timeout=10)
+        response.raise_for_status()
+        
+        from fastapi.responses import Response
+        return Response(
+            content=response.content,
+            media_type="audio/mpeg",
+            headers={
+                "Content-Disposition": f"inline; filename=voice_sample_{voice_id}.mp3",
+                "Cache-Control": "public, max-age=86400"  # Cache for 1 day
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch voice sample: {str(e)}")
+

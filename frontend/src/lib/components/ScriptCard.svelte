@@ -20,27 +20,24 @@
 	let selectedVoice: string = 'pNInz6obpgDQGcFmaJgB'; // Adam by default
 	let playingVoiceSample = false;
 	
-	// ElevenLabs voices with official sample URLs
+	// ElevenLabs voices (using backend proxy to avoid CORS)
 	const voices = [
 		{
 			id: 'pNInz6obpgDQGcFmaJgB',
 			name: 'Adam',
 			description: 'Deep male voice - Warm, narrative',
-			sampleUrl: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/pNInz6obpgDQGcFmaJgB/02c43f89-88b6-4481-aa30-577a17f41d01.mp3',
 			icon: '🎙️'
 		},
 		{
 			id: 'EXAVITQu4vr4xnSDxMaL',
 			name: 'Bella',
 			description: 'Female voice - Soft, friendly',
-			sampleUrl: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/EXAVITQu4vr4xnSDxMaL/04365bce-98e5-45f7-874a-933febb4ad4b.mp3',
 			icon: '🎤'
 		},
 		{
 			id: 'TxGEqnHWrfWFTfGW9XjX',
 			name: 'Josh',
 			description: 'Young male - Energetic, clear',
-			sampleUrl: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/TxGEqnHWrfWFTfGW9XjX/1155c987-1f5f-4d0c-8e1a-08b183a8b1b6.mp3',
 			icon: '🔊'
 		}
 	];
@@ -60,8 +57,10 @@
 			
 			playingVoiceSample = true;
 			
-			// Play official ElevenLabs sample
-			currentAudio = new Audio(voice.sampleUrl);
+			// Use backend proxy endpoint to avoid CORS
+			const sampleUrl = `/api/videos/voice-sample/${voiceId}`;
+			
+			currentAudio = new Audio(sampleUrl);
 			currentAudio.volume = 0.8;
 			
 			currentAudio.onended = () => {
@@ -69,11 +68,11 @@
 				currentAudio = null;
 			};
 			
-			currentAudio.onerror = () => {
-				console.error('Error playing sample');
+			currentAudio.onerror = (e) => {
+				console.error('Error playing sample:', e);
 				playingVoiceSample = false;
 				currentAudio = null;
-				alert('Failed to play sample. Check internet connection.');
+				alert(`Failed to load ${voice.name} sample. Backend might be offline.`);
 			};
 			
 			await currentAudio.play();
