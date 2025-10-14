@@ -15,10 +15,9 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies (ffmpeg for video processing)
 RUN apt-get update && apt-get install -y \
     ffmpeg \
-    libmpv1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
