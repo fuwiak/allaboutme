@@ -17,54 +17,71 @@
 	let backgroundTheme: string = 'cosmic';
 	let generatingBackground = false;
 	let generatedBackgroundUrl = '';
-	let selectedVoice: string = 'adam';
+	let selectedVoice: string = 'pNInz6obpgDQGcFmaJgB'; // Adam by default
 	let playingVoiceSample = false;
 	
-	// ElevenLabs voices with sample URLs
+	// ElevenLabs voices with official sample URLs
 	const voices = [
 		{
-			id: 'adam',
+			id: 'pNInz6obpgDQGcFmaJgB',
 			name: 'Adam',
 			description: 'Deep male voice - Warm, narrative',
-			sampleText: 'Сегодня звёзды обещают удивительный день! Луна дарит вам интуицию.',
+			sampleUrl: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/pNInz6obpgDQGcFmaJgB/02c43f89-88b6-4481-aa30-577a17f41d01.mp3',
 			icon: '🎙️'
 		},
 		{
-			id: 'bella',
+			id: 'EXAVITQu4vr4xnSDxMaL',
 			name: 'Bella',
 			description: 'Female voice - Soft, friendly',
-			sampleText: 'Число семь несёт в себе магию и мудрость. Слушайте свой голос!',
+			sampleUrl: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/EXAVITQu4vr4xnSDxMaL/04365bce-98e5-45f7-874a-933febb4ad4b.mp3',
 			icon: '🎤'
 		},
 		{
-			id: 'josh',
+			id: 'TxGEqnHWrfWFTfGW9XjX',
 			name: 'Josh',
 			description: 'Young male - Energetic, clear',
-			sampleText: 'Вы создатель своей реальности! Верьте в себя и действуйте!',
+			sampleUrl: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/TxGEqnHWrfWFTfGW9XjX/1155c987-1f5f-4d0c-8e1a-08b183a8b1b6.mp3',
 			icon: '🔊'
 		}
 	];
 	
+	let currentAudio: HTMLAudioElement | null = null;
+	
 	async function playVoiceSample(voiceId: string) {
-		playingVoiceSample = true;
 		try {
+			// Stop any currently playing audio
+			if (currentAudio) {
+				currentAudio.pause();
+				currentAudio = null;
+			}
+			
 			const voice = voices.find(v => v.id === voiceId);
 			if (!voice) return;
 			
-			// For demo, we'll use browser speech synthesis
-			// In production, you'd call ElevenLabs API
-			const utterance = new SpeechSynthesisUtterance(voice.sampleText);
-			utterance.lang = 'ru-RU';
-			utterance.rate = 0.9;
-			speechSynthesis.speak(utterance);
+			playingVoiceSample = true;
 			
-			// Wait for speech to finish
-			utterance.onend = () => {
+			// Play official ElevenLabs sample
+			currentAudio = new Audio(voice.sampleUrl);
+			currentAudio.volume = 0.8;
+			
+			currentAudio.onended = () => {
 				playingVoiceSample = false;
+				currentAudio = null;
 			};
+			
+			currentAudio.onerror = () => {
+				console.error('Error playing sample');
+				playingVoiceSample = false;
+				currentAudio = null;
+				alert('Failed to play sample. Check internet connection.');
+			};
+			
+			await currentAudio.play();
+			
 		} catch (error) {
 			console.error('Error playing sample:', error);
 			playingVoiceSample = false;
+			currentAudio = null;
 		}
 	}
 
