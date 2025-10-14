@@ -110,5 +110,5 @@ test_qwen_vision.py
 test_elevenlabs_russian.py
 generate_voice_samples.py
 
-# Voice samples (will be generated)
-frontend/static/voice-samples/*.mp3
+# Keep voice samples (they should be committed)
+# frontend/static/voice-samples/ - INCLUDED in repo
