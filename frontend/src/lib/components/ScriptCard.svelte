@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { api } from '$lib/api';
 	import ProgressModal from './ProgressModal.svelte';
+	import { videoSettings } from '$lib/videoSettings';
+	import { onMount } from 'svelte';
 
 	export let script: any;
 	export let onUpdate: () => void;
@@ -12,13 +14,14 @@
 	let generatingPostText = false;
 	let showProgressModal = false;
 	let currentTaskId = '';
-	let textPosition: 'top' | 'center' | 'bottom' = 'center';
 	let showVideoSettings = false;
-	let backgroundTheme: string = 'cosmic';
 	let generatingBackground = false;
-	let generatedBackgroundUrl = '';
-	let selectedVoice: string = 'pNInz6obpgDQGcFmaJgB'; // Adam by default
 	let playingVoiceSample = false;
+	
+	// Load settings from global store on mount
+	onMount(() => {
+		console.log('[ScriptCard] Current global settings:', $videoSettings);
+	});
 	
 	// ElevenLabs voices - using pre-generated samples
 	const voices = [
@@ -129,20 +132,23 @@
 		// Save first
 		await handleSave();
 
-		// Start video generation with ALL settings
+		// Use global settings from store
+		const settings = $videoSettings;
+		
+		// Start video generation with ALL settings from store
 		try {
 			const result = await api.generateVideo(
 				script.id, 
-				textPosition,
-				generatedBackgroundUrl || undefined,
-				selectedVoice
+				settings.textPosition,
+				settings.backgroundUrl || undefined,
+				settings.voiceId
 			);
 			currentTaskId = result.task_id;
 			
-			console.log('[ScriptCard] Video generation started with:', {
-				textPosition,
-				background: generatedBackgroundUrl ? 'custom' : 'default',
-				voiceId: selectedVoice,
+			console.log('[ScriptCard] Video generation started with GLOBAL settings:', {
+				textPosition: settings.textPosition,
+				background: settings.backgroundUrl ? 'custom' : 'default',
+				voiceId: settings.voiceId,
 				taskId: result.task_id
 			});
 			
@@ -177,17 +183,29 @@
 			if (!response.ok) throw new Error('Failed to generate image');
 			
 			const blob = await response.blob();
-			const file = new File([blob], `${backgroundTheme}_background.png`, { type: 'image/png' });
+			const file = new File([blob], `${$videoSettings.backgroundTheme}_background.png`, { type: 'image/png' });
 			
 			// Create object URL for preview
-			generatedBackgroundUrl = URL.createObjectURL(blob);
+			const objectUrl = URL.createObjectURL(blob);
+			
+			// Update GLOBAL store
+			videoSettings.update(s => ({ 
+				...s, 
+				backgroundUrl: objectUrl,
+				backgroundTheme: $videoSettings.backgroundTheme
+			}));
 			
 			// Upload to backend in background
 			api.uploadBackground(file)
-				.then(result => console.log('Background uploaded:', result.filename))
+				.then(result => {
+					console.log('[ScriptCard] Background uploaded:', result.filename);
+					// Update store with server path
+					const serverPath = `/storage/backgrounds/${result.filename}`;
+					videoSettings.update(s => ({ ...s, backgroundUrl: serverPath }));
+				})
 				.catch(err => console.error('Upload error:', err));
 			
-			alert(`✅ Background generated: ${backgroundTheme}`);
+			alert(`✅ Background generated and saved globally: ${$videoSettings.backgroundTheme}`);
 		} catch (error) {
 			alert(`Error generating background: ${error}`);
 		} finally {
@@ -341,6 +359,13 @@
 			on:click|stopPropagation
 		>
 			<h3 class="text-xl font-bold text-white mb-4">🎬 Video Settings</h3>
+			
+			<!-- Global Settings Banner -->
+			<div class="bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 rounded-lg p-3 mb-4">
+				<p class="text-xs text-purple-200">
+					🌐 <strong>Global Settings</strong> - These settings apply to all videos and are saved automatically
+				</p>
+			</div>
 
 			<div class="space-y-4 mb-6">
 				<!-- Text Position -->
@@ -350,24 +375,24 @@
 					</label>
 					<div class="flex gap-2">
 						<button
-							on:click={() => (textPosition = 'top')}
-							class="flex-1 px-4 py-3 rounded-lg border-2 transition-all {textPosition === 'top'
+							on:click={() => videoSettings.update(s => ({ ...s, textPosition: 'top' }))}
+							class="flex-1 px-4 py-3 rounded-lg border-2 transition-all {$videoSettings.textPosition === 'top'
 								? 'border-purple-500 bg-purple-500/20 text-white'
 								: 'border-gray-600 bg-gray-900 text-gray-300'}"
 						>
 							⬆️ Top
 						</button>
 						<button
-							on:click={() => (textPosition = 'center')}
-							class="flex-1 px-4 py-3 rounded-lg border-2 transition-all {textPosition === 'center'
+							on:click={() => videoSettings.update(s => ({ ...s, textPosition: 'center' }))}
+							class="flex-1 px-4 py-3 rounded-lg border-2 transition-all {$videoSettings.textPosition === 'center'
 								? 'border-purple-500 bg-purple-500/20 text-white'
 								: 'border-gray-600 bg-gray-900 text-gray-300'}"
 						>
 							⏺️ Center
 						</button>
 						<button
-							on:click={() => (textPosition = 'bottom')}
-							class="flex-1 px-4 py-3 rounded-lg border-2 transition-all {textPosition === 'bottom'
+							on:click={() => videoSettings.update(s => ({ ...s, textPosition: 'bottom' }))}
+							class="flex-1 px-4 py-3 rounded-lg border-2 transition-all {$videoSettings.textPosition === 'bottom'
 								? 'border-purple-500 bg-purple-500/20 text-white'
 								: 'border-gray-600 bg-gray-900 text-gray-300'}"
 						>
@@ -383,7 +408,7 @@
 					</label>
 					<div class="space-y-2">
 						{#each voices as voice}
-							<div class="flex items-center gap-2 p-3 bg-gray-900 border rounded-lg transition-all {selectedVoice === voice.id
+							<div class="flex items-center gap-2 p-3 bg-gray-900 border rounded-lg transition-all {$videoSettings.voiceId === voice.id
 								? 'border-purple-500 bg-purple-500/10'
 								: 'border-gray-600 hover:border-gray-500'}">
 								<input
@@ -391,7 +416,8 @@
 									id="voice-{voice.id}"
 									name="voice"
 									value={voice.id}
-									bind:group={selectedVoice}
+									checked={$videoSettings.voiceId === voice.id}
+									on:change={() => videoSettings.update(s => ({ ...s, voiceId: voice.id }))}
 									class="w-4 h-4 text-purple-600"
 								/>
 								<label for="voice-{voice.id}" class="flex-1 cursor-pointer">
@@ -432,7 +458,8 @@
 					<label class="block text-xs text-gray-400 mb-2">✨ Generate AI Background:</label>
 					<div class="flex gap-2">
 						<select
-							bind:value={backgroundTheme}
+							value={$videoSettings.backgroundTheme}
+							on:change={(e) => videoSettings.update(s => ({ ...s, backgroundTheme: e.currentTarget.value }))}
 							class="flex-1 px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white text-sm"
 						>
 							<option value="cosmic">🌌 Cosmic</option>
@@ -486,17 +513,17 @@
 				</div>
 				
 			<!-- Preview Generated Background -->
-			{#if generatedBackgroundUrl}
+			{#if $videoSettings.backgroundUrl}
 				<div class="mt-3">
 					<div class="relative">
-						<img src={generatedBackgroundUrl} alt="Generated background" class="w-full h-32 object-cover rounded-lg border-2 border-green-500" />
+						<img src={$videoSettings.backgroundUrl} alt="Generated background" class="w-full h-32 object-cover rounded-lg border-2 border-green-500" />
 						<button
 							on:click={() => {
 								// Revoke the blob URL to free memory
-								if (generatedBackgroundUrl.startsWith('blob:')) {
-									URL.revokeObjectURL(generatedBackgroundUrl);
+								if ($videoSettings.backgroundUrl?.startsWith('blob:')) {
+									URL.revokeObjectURL($videoSettings.backgroundUrl);
 								}
-								generatedBackgroundUrl = '';
+								videoSettings.update(s => ({ ...s, backgroundUrl: null }));
 							}}
 							class="absolute top-2 right-2 px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded shadow-lg transition-colors"
 							title="Clear background"
@@ -504,7 +531,7 @@
 							✕
 						</button>
 					</div>
-					<p class="text-xs text-green-400 mt-1">✅ Background ready</p>
+					<p class="text-xs text-green-400 mt-1">✅ Background ready (global)</p>
 				</div>
 			{/if}
 			</div>

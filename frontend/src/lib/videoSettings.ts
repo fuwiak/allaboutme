@@ -1,0 +1,68 @@
+import { writable } from 'svelte/store';
+
+export interface VideoSettings {
+	textPosition: 'top' | 'center' | 'bottom';
+	voiceId: string;
+	backgroundUrl: string | null;
+	backgroundTheme: string;
+}
+
+// Default settings
+const defaultSettings: VideoSettings = {
+	textPosition: 'center',
+	voiceId: 'adam',
+	backgroundUrl: null,
+	backgroundTheme: 'cosmic'
+};
+
+// Load from localStorage if available
+function loadSettings(): VideoSettings {
+	if (typeof window === 'undefined') return defaultSettings;
+	
+	const saved = localStorage.getItem('video_settings');
+	if (saved) {
+		try {
+			return { ...defaultSettings, ...JSON.parse(saved) };
+		} catch (e) {
+			console.error('Failed to load video settings:', e);
+		}
+	}
+	return defaultSettings;
+}
+
+// Create store
+export const videoSettings = writable<VideoSettings>(loadSettings());
+
+// Save to localStorage on changes
+if (typeof window !== 'undefined') {
+	videoSettings.subscribe(value => {
+		localStorage.setItem('video_settings', JSON.stringify(value));
+		console.log('[VideoSettings] Settings saved:', value);
+	});
+}
+
+// Helper functions
+export function updateTextPosition(position: 'top' | 'center' | 'bottom') {
+	videoSettings.update(s => ({ ...s, textPosition: position }));
+}
+
+export function updateVoice(voiceId: string) {
+	videoSettings.update(s => ({ ...s, voiceId }));
+}
+
+export function updateBackground(url: string | null, theme?: string) {
+	videoSettings.update(s => ({ 
+		...s, 
+		backgroundUrl: url,
+		...(theme && { backgroundTheme: theme })
+	}));
+}
+
+export function clearBackground() {
+	videoSettings.update(s => ({ ...s, backgroundUrl: null }));
+}
+
+export function resetSettings() {
+	videoSettings.set(defaultSettings);
+}
+
