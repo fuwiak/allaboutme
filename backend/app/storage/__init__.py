@@ -17,14 +17,20 @@ def init_storage():
     
     from ..config import settings
     
+    print(f"[init_storage] DEBUG: settings.STORAGE_PATH = {settings.STORAGE_PATH}")
+    
     STORAGE_ROOT = Path(settings.STORAGE_PATH)
     VIDEOS_DIR = STORAGE_ROOT / "videos"
     AUDIO_DIR = STORAGE_ROOT / "audio"
     BACKGROUNDS_DIR = STORAGE_ROOT / "backgrounds"
     
+    print(f"[init_storage] DEBUG: STORAGE_ROOT = {STORAGE_ROOT}")
+    
     VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
     AUDIO_DIR.mkdir(parents=True, exist_ok=True)
     BACKGROUNDS_DIR.mkdir(parents=True, exist_ok=True)
+    
+    print(f"[init_storage] DEBUG: Directories created successfully")
 
 
 def get_video_path(video_id: int) -> str:

@@ -139,16 +139,20 @@ if static_path.exists():
     else:
         logger.warning(f"⚠️  _app directory not found: {app_path}")
     
-    @app.get("/{full_path:path}")
+    # Catch-all for SPA routing - must be LAST
+    # Note: This will NOT match /storage, /api, etc as they're already mounted above
+    from fastapi.responses import HTMLResponse
+    
+    @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_spa(full_path: str):
         """Serve SvelteKit SPA"""
         file_path = static_path / full_path
         
-        # If file exists, serve it
+        # If file exists in static, serve it
         if file_path.is_file():
             return FileResponse(file_path)
         
-        # Otherwise serve index.html (SPA routing)
+        # Otherwise serve index.html for SPA routing
         index_path = static_path / "index.html"
         if index_path.exists():
             return FileResponse(index_path)

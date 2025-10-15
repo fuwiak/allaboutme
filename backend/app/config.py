@@ -2,6 +2,10 @@
 import os
 from pydantic_settings import BaseSettings
 from typing import Optional
+from dotenv import load_dotenv
+
+# Load .env file explicitly before Settings initialization
+load_dotenv()
 
 
 class Settings(BaseSettings):
