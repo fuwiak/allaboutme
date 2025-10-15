@@ -68,11 +68,16 @@ def generate_video(
     if not script:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Script not found")
     
-    # Start async task
-    task = generate_video_task.delay(request.script_id)
+    # Start async task with all settings
+    task = generate_video_task.delay(
+        request.script_id,
+        request.text_position,
+        request.custom_background,
+        request.voice_id
+    )
     
     return {
         "task_id": task.id,
-        "message": f"Generating video for script {request.script_id}"
+        "message": f"Generating video for script {request.script_id} with voice {request.voice_id or 'default'}"
     }
 

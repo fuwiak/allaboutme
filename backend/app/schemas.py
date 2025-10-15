@@ -144,6 +144,7 @@ class GenerateVideoRequest(BaseModel):
     script_id: int
     text_position: Optional[str] = "center"  # top, center, bottom
     custom_background: Optional[str] = None  # path to custom background
+    voice_id: Optional[str] = None  # ElevenLabs voice ID
 
 
 class GenerateVideoResponse(BaseModel):

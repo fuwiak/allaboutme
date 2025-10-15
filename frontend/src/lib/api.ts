@@ -184,13 +184,19 @@ export class APIClient {
 		});
 	}
 
-	async generateVideo(scriptId: number, textPosition: string = 'center', customBackground?: string) {
+	async generateVideo(
+		scriptId: number, 
+		textPosition: string = 'center', 
+		customBackground?: string,
+		voiceId?: string
+	) {
 		return this.request('/api/generate/video', {
 			method: 'POST',
 			body: JSON.stringify({ 
 				script_id: scriptId,
 				text_position: textPosition,
-				custom_background: customBackground
+				custom_background: customBackground,
+				voice_id: voiceId
 			})
 		});
 	}

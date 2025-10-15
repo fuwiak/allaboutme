@@ -126,18 +126,32 @@
 	}
 
 	async function startVideoGeneration() {
-		showVideoSettings = false;
-
 		// Save first
 		await handleSave();
 
-		// Start video generation with settings
+		// Start video generation with ALL settings
 		try {
-			const result = await api.generateVideo(script.id, textPosition);
+			const result = await api.generateVideo(
+				script.id, 
+				textPosition,
+				generatedBackgroundUrl || undefined,
+				selectedVoice
+			);
 			currentTaskId = result.task_id;
+			
+			console.log('[ScriptCard] Video generation started with:', {
+				textPosition,
+				background: generatedBackgroundUrl ? 'custom' : 'default',
+				voiceId: selectedVoice,
+				taskId: result.task_id
+			});
+			
+			// Close settings modal and show progress modal
+			showVideoSettings = false;
 			showProgressModal = true;
 		} catch (error) {
 			alert(`Error creating video: ${error}`);
+			showVideoSettings = false;
 		}
 	}
 

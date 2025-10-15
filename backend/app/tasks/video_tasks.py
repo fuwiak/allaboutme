@@ -95,9 +95,11 @@ def generate_post_text_task(self, script_id: int):
 
 
 @celery_app.task(bind=True)
-def generate_video_task(self, script_id: int):
-    """Generate video from script asynchronously"""
+def generate_video_task(self, script_id: int, text_position: str = "center", custom_background: str = None, voice_id: str = None):
+    """Generate video from script asynchronously with custom settings"""
     db = SessionLocal()
+    
+    logger.info(f"Generating video for script {script_id} with settings: position={text_position}, voice={voice_id}, bg={custom_background is not None}")
     
     try:
         # Get script
@@ -147,12 +149,21 @@ def generate_video_task(self, script_id: int):
                 from ..services.opensource_video import render_video_opensource
                 video_url, audio_url = render_video_opensource(
                     text_for_video,
-                    progress_callback=progress_callback
+                    progress_callback=progress_callback,
+                    text_position=text_position,
+                    custom_background=custom_background,
+                    voice_id=voice_id
                 )
                 video.generator = "opensource"
             else:
                 from ..services.renderer import render_video
-                video_url = render_video(text_for_video, progress_callback=progress_callback)
+                video_url = render_video(
+                    text_for_video, 
+                    progress_callback=progress_callback,
+                    text_position=text_position,
+                    custom_background=custom_background,
+                    voice_id=voice_id
+                )
                 audio_url = None  # HeyGen doesn't provide separate audio
                 video.generator = "heygen"
             
