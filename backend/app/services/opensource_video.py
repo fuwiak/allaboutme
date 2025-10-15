@@ -28,6 +28,9 @@ logger = logging.getLogger(__name__)
 TEMP_DIR = Path(tempfile.gettempdir()) / "ai24tv"
 TEMP_DIR.mkdir(exist_ok=True)
 
+# ElevenLabs API configuration
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY") or os.getenv("ELEVEN_LABS_API_KEY")
+
 # Бесплатные фоны для эзотерических тем
 BACKGROUND_URLS = {
     "space": [
@@ -163,6 +166,59 @@ def generate_voice_gtts(text: str, lang: str = "ru", slow: bool = False, log_cal
         raise
 
 
+def generate_voice_elevenlabs(text: str, voice_id: str, log_callback=None) -> Path:
+    """Generate voice using ElevenLabs API with selected voice"""
+    if not ELEVENLABS_API_KEY:
+        logger.warning("⚠️  ELEVENLABS_API_KEY not set, falling back to gTTS")
+        if log_callback:
+            log_callback("⚠️  ElevenLabs not configured, using gTTS")
+        return generate_voice_gtts(text, "ru", False, log_callback)
+    
+    try:
+        logger.info(f"🎙️  Generating audio with ElevenLabs voice: {voice_id}")
+        if log_callback:
+            log_callback(f"🎙️  Using ElevenLabs voice")
+        
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+        
+        headers = {
+            "Accept": "audio/mpeg",
+            "Content-Type": "application/json",
+            "xi-api-key": ELEVENLABS_API_KEY
+        }
+        
+        data = {
+            "text": text,
+            "model_id": "eleven_multilingual_v2",
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.75,
+                "style": 0.5,
+                "use_speaker_boost": True
+            }
+        }
+        
+        response = requests.post(url, json=data, headers=headers, timeout=30)
+        response.raise_for_status()
+        
+        # Save audio
+        audio_path = TEMP_DIR / f"elevenlabs_{voice_id[:8]}.mp3"
+        with open(audio_path, "wb") as f:
+            f.write(response.content)
+        
+        logger.info(f"✅ ElevenLabs audio generated: {audio_path}")
+        if log_callback:
+            log_callback(f"✅ Voice generated with ElevenLabs")
+        
+        return audio_path
+        
+    except Exception as e:
+        logger.error(f"❌ ElevenLabs error: {e}, falling back to gTTS")
+        if log_callback:
+            log_callback(f"⚠️  ElevenLabs failed, using gTTS")
+        return generate_voice_gtts(text, "ru", False, log_callback)
+
+
 def generate_voice(text: str, lang: str = "ru", slow: bool = False, use_premium: bool = True, log_callback=None) -> Path:
     """
     Генерация голоса - автоматически выбирает лучший доступный движок
@@ -194,7 +250,10 @@ def create_opensource_video(
     height: int = 1920,
     add_subtitles: bool = True,
     output_path: Path = None,
-    log_callback=None
+    log_callback=None,
+    custom_background_path: str = None,
+    text_position: str = "center",
+    voice_id: str = None
 ) -> Path:
     """
     Создать видео с open-source инструментами
@@ -204,6 +263,9 @@ def create_opensource_video(
         background_category: Категория фона (space, planets, mystical, astrology)
         background_index: Индекс фона в категории
         voice_lang: Язык голоса (ru, en, etc.)
+        custom_background_path: Custom background image path (overrides category)
+        text_position: Text position (top, center, bottom)
+        voice_id: ElevenLabs voice ID for TTS
         voice_slow: Медленная речь
         width: Ширина видео
         height: Высота видео
@@ -223,13 +285,27 @@ def create_opensource_video(
         logger.info(f"   Фон: {background_category}")
         logger.info(f"   Скрипт: {len(script)} символов")
         
-        # 1. Скачиваем/создаем фон
-        bg_image = download_background(background_category, background_index)
+        # 1. Скачиваем/создаем фон (или используем custom)
+        if custom_background_path and Path(custom_background_path).exists():
+            bg_image = Path(custom_background_path)
+            logger.info(f"✅ Using custom background: {bg_image}")
+            if log_callback:
+                log_callback(f"✅ Custom background loaded")
+        else:
+            bg_image = download_background(background_category, background_index)
+            if log_callback:
+                log_callback(f"✅ Background category: {background_category}")
         
-        # 2. Генерируем голос
+        # 2. Генерируем голос (с выбранным voice_id если есть)
         if log_callback:
-            log_callback("🎤 Генерирую голос...")
-        audio_file = generate_voice(script, lang=voice_lang, slow=voice_slow, log_callback=log_callback)
+            log_callback(f"🎤 Генерирую голос{f' ({voice_id})' if voice_id else ''}...")
+        
+        if voice_id:
+            # Use ElevenLabs with selected voice
+            audio_file = generate_voice_elevenlabs(script, voice_id, log_callback)
+        else:
+            # Use default (gTTS)
+            audio_file = generate_voice(script, lang=voice_lang, slow=voice_slow, log_callback=log_callback)
         
         # 3. Загружаем аудио и получаем длительность
         audio_clip = AudioFileClip(str(audio_file))
@@ -353,26 +429,40 @@ def render_video_opensource(script: str, progress_callback=None, log_callback=No
         if progress_callback:
             progress_callback("processing", 0)
         
-        # Определяем категорию фона по ключевым словам
-        script_lower = script.lower()
-        
-        if any(word in script_lower for word in ["планета", "planet", "марс", "венера"]):
-            category = "planets"
-        elif any(word in script_lower for word in ["зодиак", "гороскоп", "астрология", "zodiac"]):
-            category = "astrology"
-        elif any(word in script_lower for word in ["мистика", "магия", "таро", "mystical"]):
-            category = "mystical"
+        # Use custom background or auto-detect category
+        if custom_background:
+            # Use custom background directly
+            category = "custom"
+            logger.info(f"🖼️  Using custom background: {custom_background}")
+            if log_callback:
+                log_callback(f"🖼️  Custom background: {custom_background}")
         else:
-            category = "space"
-        
-        logger.info(f"📂 Выбрана категория фона: {category}")
-        if log_callback:
-            log_callback(f"📂 Выбрана категория фона: {category}")
+            # Auto-detect category from script
+            script_lower = script.lower()
+            
+            if any(word in script_lower for word in ["планета", "planet", "марс", "венера"]):
+                category = "planets"
+            elif any(word in script_lower for word in ["зодиак", "гороскоп", "астрология", "zodiac"]):
+                category = "astrology"
+            elif any(word in script_lower for word in ["мистика", "магия", "таро", "mystical"]):
+                category = "mystical"
+            else:
+                category = "space"
+            
+            logger.info(f"📂 Auto-detected background category: {category}")
+            if log_callback:
+                log_callback(f"📂 Background category: {category}")
         
         if progress_callback:
             progress_callback("processing", 30)
         
-        # Создаем видео
+        # Log voice selection
+        if voice_id:
+            logger.info(f"🎙️  Using selected voice: {voice_id}")
+            if log_callback:
+                log_callback(f"🎙️  Voice: {voice_id}")
+        
+        # Создаем видео с custom settings
         if log_callback:
             log_callback("🎬 Создание видео...")
         
@@ -382,7 +472,10 @@ def render_video_opensource(script: str, progress_callback=None, log_callback=No
             background_index=0,
             voice_lang="ru",
             add_subtitles=True,
-            log_callback=log_callback
+            log_callback=log_callback,
+            custom_background_path=custom_background if custom_background else None,
+            text_position=text_position,
+            voice_id=voice_id
         )
         
         if progress_callback:
