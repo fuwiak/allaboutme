@@ -532,13 +532,30 @@
 					<p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF, WebP (max 10MB)</p>
 				</div>
 				
+			<!-- Debug Info -->
+			<div class="mt-2 p-2 bg-gray-900 rounded text-xs">
+				<p class="text-gray-400">Debug: backgroundUrl = {$videoSettings.backgroundUrl || 'null'}</p>
+			</div>
+			
 			<!-- Preview Generated Background -->
 			{#if $videoSettings.backgroundUrl}
 				<div class="mt-3">
 					<div class="relative">
-						<img src={$videoSettings.backgroundUrl} alt="Generated background" class="w-full h-32 object-cover rounded-lg border-2 border-green-500" />
+						<img 
+							src={$videoSettings.backgroundUrl} 
+							alt="Generated background" 
+							class="w-full h-32 object-cover rounded-lg border-2 border-green-500"
+							on:error={(e) => {
+								console.error('[ScriptCard] Image load error:', e);
+								console.error('[ScriptCard] Failed URL:', $videoSettings.backgroundUrl);
+							}}
+							on:load={() => {
+								console.log('[ScriptCard] Image loaded successfully:', $videoSettings.backgroundUrl);
+							}}
+						/>
 						<button
 							on:click={() => {
+								console.log('[ScriptCard] Clearing background:', $videoSettings.backgroundUrl);
 								// Revoke the blob URL to free memory
 								if ($videoSettings.backgroundUrl?.startsWith('blob:')) {
 									URL.revokeObjectURL($videoSettings.backgroundUrl);
@@ -552,6 +569,10 @@
 						</button>
 					</div>
 					<p class="text-xs text-green-400 mt-1">✅ Background ready (global)</p>
+				</div>
+			{:else}
+				<div class="mt-2 p-2 bg-yellow-900/20 border border-yellow-600 rounded text-xs text-yellow-300">
+					ℹ️ No background selected. Generate or upload to preview.
 				</div>
 			{/if}
 			</div>
