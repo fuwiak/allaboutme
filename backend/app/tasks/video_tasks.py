@@ -136,36 +136,31 @@ def generate_video_task(self, script_id: int, text_position: str = "center", cus
         # Use post_text if available, otherwise use script
         text_for_video = script.post_text if script.post_text else script.script
         
-        # Generate video
+        # Generate video using SIMPLE generator (frontend settings only)
         try:
-            # Determine generator from settings
-            generator_type = db.query(models.Setting).filter(
-                models.Setting.key == "video_generator"
-            ).first()
+            logger.info(f"🎬 Starting SIMPLE video generation")
+            logger.info(f"   Text: {len(text_for_video)} chars")
+            logger.info(f"   Voice: {voice_id}")
+            logger.info(f"   Background: {custom_background}")
+            logger.info(f"   Position: {text_position}")
             
-            use_opensource = generator_type and generator_type.value == "opensource"
+            # Validate inputs
+            if not voice_id:
+                raise ValueError("voice_id is required from frontend")
             
-            if use_opensource:
-                from ..services.opensource_video import render_video_opensource
-                video_url, audio_url = render_video_opensource(
-                    text_for_video,
-                    progress_callback=progress_callback,
-                    text_position=text_position,
-                    custom_background=custom_background,
-                    voice_id=voice_id
-                )
-                video.generator = "opensource"
-            else:
-                from ..services.renderer import render_video
-                video_url = render_video(
-                    text_for_video, 
-                    progress_callback=progress_callback,
-                    text_position=text_position,
-                    custom_background=custom_background,
-                    voice_id=voice_id
-                )
-                audio_url = None  # HeyGen doesn't provide separate audio
-                video.generator = "heygen"
+            if not custom_background:
+                raise ValueError("custom_background is required from frontend")
+            
+            # Use simple generator
+            from ..services.video_generator import generate_video_simple
+            video_url, audio_url = generate_video_simple(
+                text=text_for_video,
+                voice_id=voice_id,
+                background_url=custom_background,
+                text_position=text_position,
+                progress_callback=progress_callback
+            )
+            video.generator = "simple"
             
             # Save file paths
             video.video_path = video_url
