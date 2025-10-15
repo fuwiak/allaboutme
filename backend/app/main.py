@@ -119,6 +119,15 @@ from .routers import settings as settings_router
 app.include_router(settings_router.router)
 
 
+# Mount storage directory for videos/audio
+from .storage import STORAGE_ROOT, init_storage
+init_storage()
+if STORAGE_ROOT and STORAGE_ROOT.exists():
+    app.mount("/storage", StaticFiles(directory=str(STORAGE_ROOT)), name="storage")
+    logger.info(f"✅ Mounted storage from {STORAGE_ROOT}")
+else:
+    logger.warning(f"⚠️  Storage directory not found: {STORAGE_ROOT}")
+
 # Serve static files (SvelteKit build)
 static_path = Path(__file__).parent / "static"
 if static_path.exists():
