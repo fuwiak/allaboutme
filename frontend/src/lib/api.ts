@@ -190,14 +190,20 @@ export class APIClient {
 		customBackground?: string,
 		voiceId?: string
 	) {
+		const payload = { 
+			script_id: scriptId,
+			text_position: textPosition,
+			custom_background: customBackground,
+			voice_id: voiceId
+		};
+		
+		console.log('[API] 🎬 generateVideo called with:', payload);
+		console.log('[API] Background present?', !!customBackground);
+		console.log('[API] Voice present?', !!voiceId);
+		
 		return this.request('/api/generate/video', {
 			method: 'POST',
-			body: JSON.stringify({ 
-				script_id: scriptId,
-				text_position: textPosition,
-				custom_background: customBackground,
-				voice_id: voiceId
-			})
+			body: JSON.stringify(payload)
 		});
 	}
 
