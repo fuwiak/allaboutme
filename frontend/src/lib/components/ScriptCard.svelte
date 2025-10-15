@@ -135,6 +135,15 @@
 		// Use global settings from store
 		const settings = $videoSettings;
 		
+		console.log('[ScriptCard] 🎬 STARTING VIDEO GENERATION');
+		console.log('[ScriptCard] Store values:', JSON.stringify(settings, null, 2));
+		console.log('[ScriptCard] Will send to API:', {
+			scriptId: script.id,
+			textPosition: settings.textPosition,
+			customBackground: settings.backgroundUrl || 'undefined',
+			voiceId: settings.voiceId
+		});
+		
 		// Start video generation with ALL settings from store
 		try {
 			const result = await api.generateVideo(
@@ -145,9 +154,10 @@
 			);
 			currentTaskId = result.task_id;
 			
-			console.log('[ScriptCard] Video generation started with GLOBAL settings:', {
+			console.log('[ScriptCard] ✅ API Response:', result);
+			console.log('[ScriptCard] Video generation started with settings:', {
 				textPosition: settings.textPosition,
-				background: settings.backgroundUrl ? 'custom' : 'default',
+				backgroundUrl: settings.backgroundUrl || 'none (auto-detect)',
 				voiceId: settings.voiceId,
 				taskId: result.task_id
 			});
@@ -156,6 +166,7 @@
 			showVideoSettings = false;
 			showProgressModal = true;
 		} catch (error) {
+			console.error('[ScriptCard] ❌ Error:', error);
 			alert(`Error creating video: ${error}`);
 			showVideoSettings = false;
 		}

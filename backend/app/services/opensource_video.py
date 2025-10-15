@@ -299,12 +299,12 @@ def create_opensource_video(
                 if log_callback:
                     log_callback(f"⚠️  Custom background not found, using default")
                 bg_image = download_background(
-                    background_category=background_category,
-                    index=background_index,
-                    log_callback=log_callback
+                    category=background_category,
+                    index=background_index
                 )
         else:
-            bg_image = download_background(background_category, background_index)
+            logger.info(f"🖼️  Using auto-detected background: {background_category}")
+            bg_image = download_background(category=background_category, index=background_index)
             if log_callback:
                 log_callback(f"✅ Background category: {background_category}")
         
