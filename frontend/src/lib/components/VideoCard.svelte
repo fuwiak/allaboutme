@@ -22,12 +22,17 @@
 		}
 	});
 	
-	$: videoUrl = token ? `/api/videos/${video.id}/download?token=${encodeURIComponent(token)}` : `/api/videos/${video.id}/download`;
-	$: audioUrl = token ? `/api/videos/${video.id}/download-audio?token=${encodeURIComponent(token)}` : `/api/videos/${video.id}/download-audio`;
+	// Reactive URLs - update when token or video.id changes
+	$: videoUrl = token && video?.id ? `/api/videos/${video.id}/download?token=${encodeURIComponent(token)}` : '';
+	$: audioUrl = token && video?.id ? `/api/videos/${video.id}/download-audio?token=${encodeURIComponent(token)}` : '';
 	
+	// Reactive logging
 	$: {
-		if (token && video.id) {
-			console.log('[VideoCard] Generated URLs:', { videoUrl, audioUrl });
+		if (token && video?.id) {
+			console.log(`[VideoCard-${video.id}] URLs:`, { 
+				videoUrl: videoUrl.substring(0, 50) + '...',
+				audioUrl: audioUrl.substring(0, 50) + '...'
+			});
 		}
 	}
 
@@ -159,15 +164,20 @@
 					</button>
 				</div>
 				
-				<!-- HTML5 Video Player -->
-				<video
-					controls
-					class="w-full rounded-lg bg-black mb-2"
-					style="max-height: 400px;"
-				>
-					<source src={videoUrl} type="video/mp4" />
-					Your browser doesn't support video playback.
-				</video>
+			<!-- HTML5 Video Player -->
+			<video
+				controls
+				preload="metadata"
+				class="w-full rounded-lg bg-black mb-2"
+				style="max-height: 400px;"
+				on:error={(e) => console.error(`[VideoCard-${video.id}] Video load error:`, e)}
+			>
+				<source src={videoUrl} type="video/mp4" />
+				Your browser doesn't support video playback.
+			</video>
+			{#if !videoUrl}
+				<div class="text-xs text-yellow-400 mt-1">⚠️ Video URL not available (token: {token ? 'yes' : 'no'})</div>
+			{/if}
 				
 				<div class="flex gap-2">
 					<a
@@ -194,14 +204,19 @@
 					</button>
 				</div>
 				
-				<!-- HTML5 Audio Player -->
-				<audio
-					controls
-					class="w-full mb-2"
-				>
-					<source src={audioUrl} type="audio/mpeg" />
-					Your browser doesn't support audio playback.
-				</audio>
+			<!-- HTML5 Audio Player -->
+			<audio
+				controls
+				preload="metadata"
+				class="w-full mb-2"
+				on:error={(e) => console.error(`[VideoCard-${video.id}] Audio load error:`, e)}
+			>
+				<source src={audioUrl} type="audio/mpeg" />
+				Your browser doesn't support audio playback.
+			</audio>
+			{#if !audioUrl}
+				<div class="text-xs text-yellow-400 mt-1">⚠️ Audio URL not available (token: {token ? 'yes' : 'no'})</div>
+			{/if}
 				
 				<div class="flex gap-2">
 					<a
