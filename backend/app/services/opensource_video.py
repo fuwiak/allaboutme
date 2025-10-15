@@ -288,14 +288,30 @@ def create_opensource_video(
         # 1. Скачиваем/создаем фон (или используем custom)
         if custom_background_path:
             logger.info(f"🖼️  Custom background requested: {custom_background_path}")
-            bg_path = Path(custom_background_path)
+            
+            # Convert URL to filesystem path
+            if custom_background_path.startswith('/storage/'):
+                # URL format: /storage/backgrounds/filename.jpg
+                # Convert to: STORAGE_ROOT/backgrounds/filename.jpg
+                from .. import storage as storage_module
+                if storage_module.STORAGE_ROOT:
+                    relative_path = custom_background_path.replace('/storage/', '')
+                    bg_path = storage_module.STORAGE_ROOT / relative_path
+                    logger.info(f"🔄 Converted URL to path: {bg_path}")
+                else:
+                    logger.error(f"❌ STORAGE_ROOT not initialized!")
+                    bg_path = Path(custom_background_path)
+            else:
+                # Already a filesystem path
+                bg_path = Path(custom_background_path)
+            
             if bg_path.exists():
                 bg_image = bg_path
                 logger.info(f"✅ Using custom background: {bg_image}")
                 if log_callback:
                     log_callback(f"✅ Custom background: {bg_image.name}")
             else:
-                logger.warning(f"⚠️  Custom background not found: {custom_background_path}, using default")
+                logger.warning(f"⚠️  Custom background not found at {bg_path}, using default")
                 if log_callback:
                     log_callback(f"⚠️  Custom background not found, using default")
                 bg_image = download_background(
