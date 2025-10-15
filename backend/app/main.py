@@ -120,13 +120,15 @@ app.include_router(settings_router.router)
 
 
 # Mount storage directory for videos/audio
-from .storage import STORAGE_ROOT, init_storage
-init_storage()
-if STORAGE_ROOT and STORAGE_ROOT.exists():
-    app.mount("/storage", StaticFiles(directory=str(STORAGE_ROOT)), name="storage")
-    logger.info(f"✅ Mounted storage from {STORAGE_ROOT}")
+from . import storage as storage_module
+storage_module.init_storage()
+
+# Get STORAGE_ROOT after init
+if storage_module.STORAGE_ROOT and storage_module.STORAGE_ROOT.exists():
+    app.mount("/storage", StaticFiles(directory=str(storage_module.STORAGE_ROOT)), name="storage")
+    logger.info(f"✅ Mounted storage from {storage_module.STORAGE_ROOT}")
 else:
-    logger.warning(f"⚠️  Storage directory not found: {STORAGE_ROOT}")
+    logger.warning(f"⚠️  Storage directory not found: {storage_module.STORAGE_ROOT}")
 
 # Serve static files (SvelteKit build)
 static_path = Path(__file__).parent / "static"
@@ -139,31 +141,22 @@ if static_path.exists():
     else:
         logger.warning(f"⚠️  _app directory not found: {app_path}")
     
-    # Catch-all for SPA routing - must be LAST
-    # Note: This will NOT match /storage, /api, etc as they're already mounted above
-    from fastapi.responses import HTMLResponse
-    
-    @app.get("/{full_path:path}", include_in_schema=False)
-    async def serve_spa(full_path: str):
-        """Serve SvelteKit SPA"""
-        file_path = static_path / full_path
-        
-        # If file exists in static, serve it
-        if file_path.is_file():
-            return FileResponse(file_path)
-        
-        # Otherwise serve index.html for SPA routing
+    # Serve root path
+    @app.get("/", include_in_schema=False)
+    async def serve_root():
+        """Serve index.html for root path"""
         index_path = static_path / "index.html"
         if index_path.exists():
             return FileResponse(index_path)
-        
-        # Frontend not built - return helpful message
         return {
             "message": "AllAboutMe API is running!",
             "frontend": "Not built yet - use /docs for API",
             "docs": "/docs",
             "health": "/health"
         }
+    
+    # Note: For SPA routing, configure SvelteKit adapter to use hash routing
+    # or handle client-side routing. Catch-all conflicts with /storage mount.
 else:
     # No static directory at all - API only mode
     @app.get("/")
