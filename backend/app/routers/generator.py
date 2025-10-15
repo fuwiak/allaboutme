@@ -62,6 +62,16 @@ def generate_video(
     current_user: models.User = Depends(get_current_user)
 ):
     """Generate video from script asynchronously"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Log incoming request
+    logger.info(f"🎬 Generate video request received:")
+    logger.info(f"   Script ID: {request.script_id}")
+    logger.info(f"   Text Position: {request.text_position}")
+    logger.info(f"   Custom Background: {request.custom_background}")
+    logger.info(f"   Voice ID: {request.voice_id}")
+    
     # Check if script exists
     script = db.query(models.Script).filter(models.Script.id == request.script_id).first()
     
@@ -75,6 +85,8 @@ def generate_video(
         request.custom_background,
         request.voice_id
     )
+    
+    logger.info(f"✅ Started Celery task: {task.id}")
     
     return {
         "task_id": task.id,
