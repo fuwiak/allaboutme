@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from .celery_app import celery_app
 from ..database import SessionLocal
 from .. import models
-from ..services import generator, renderer
+from ..services import generator
 from ..storage import get_video_path, get_audio_path
 from ..config import settings
 
