@@ -7,7 +7,6 @@ import logging
 from pathlib import Path
 import tempfile
 import requests
-from moviepy.editor import ImageClip, AudioFileClip, TextClip, CompositeVideoClip
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,6 @@ TEMP_DIR.mkdir(exist_ok=True)
 def generate_audio_elevenlabs(text: str, voice_id: str) -> Path:
     """Generate audio using ElevenLabs API"""
     import os
-    from elevenlabs import generate, save
     
     api_key = os.getenv("ELEVENLABS_API_KEY")
     if not api_key:
@@ -27,16 +25,33 @@ def generate_audio_elevenlabs(text: str, voice_id: str) -> Path:
     logger.info(f"🎤 Generating audio with ElevenLabs voice: {voice_id}")
     
     try:
-        # Generate audio
-        audio = generate(
-            text=text,
-            voice=voice_id,
-            model="eleven_multilingual_v2"
-        )
+        # Call ElevenLabs API directly
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
         
-        # Save to file
-        audio_file = TEMP_DIR / f"audio_{hash(text)}.mp3"
-        save(audio, str(audio_file))
+        headers = {
+            "Accept": "audio/mpeg",
+            "Content-Type": "application/json",
+            "xi-api-key": api_key
+        }
+        
+        data = {
+            "text": text,
+            "model_id": "eleven_multilingual_v2",
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.75,
+                "style": 0.5,
+                "use_speaker_boost": True
+            }
+        }
+        
+        response = requests.post(url, json=data, headers=headers, timeout=30)
+        response.raise_for_status()
+        
+        # Save audio
+        audio_file = TEMP_DIR / f"audio_elevenlabs_{voice_id[:8]}_{hash(text)}.mp3"
+        with open(audio_file, "wb") as f:
+            f.write(response.content)
         
         logger.info(f"✅ Audio generated: {audio_file}")
         return audio_file
@@ -84,23 +99,28 @@ def create_video(
     logger.info(f"   Text position: {text_position}")
     
     try:
+        # Import MoviePy components (correct structure for v2.x)
+        from moviepy.audio.io.AudioFileClip import AudioFileClip
+        from moviepy.video.VideoClip import ImageClip, TextClip
+        from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
+        
         # Load audio to get duration
         audio_clip = AudioFileClip(str(audio_path))
         duration = audio_clip.duration
         logger.info(f"   Duration: {duration:.1f}s")
         
         # Create video from background image
-        video_clip = ImageClip(str(background_path)).set_duration(duration)
+        video_clip = ImageClip(str(background_path)).with_duration(duration)
         
         # Resize to 1080x1920 (vertical format)
-        video_clip = video_clip.resize(height=1920)
+        video_clip = video_clip.resized(height=1920)
         w, h = video_clip.size
         if w > 1080:
             # Crop center
             x_center = w / 2
             x1 = int(x_center - 540)
             x2 = int(x_center + 540)
-            video_clip = video_clip.crop(x1=x1, x2=x2, y1=0, y2=1920)
+            video_clip = video_clip.cropped(x1=x1, x2=x2, y1=0, y2=1920)
         
         # Add text overlay
         clips = [video_clip]
@@ -113,7 +133,7 @@ def create_video(
         else:  # center
             y_pos = 1920 / 2 - 100
         
-        # Split text into chunks
+        # Split text into chunks for subtitles
         words = text.split()
         words_per_line = 3
         lines = [' '.join(words[i:i+words_per_line]) for i in range(0, len(words), words_per_line)]
@@ -124,21 +144,23 @@ def create_video(
             txt_duration = duration / len(lines)
             
             txt_clip = TextClip(
-                line,
-                fontsize=50,
+                text=line,
+                font_size=50,
                 color='white',
-                font='Arial-Bold',
+                font='Arial',
                 stroke_color='black',
                 stroke_width=3,
                 size=(980, None),
                 method='caption'
-            ).set_position(('center', y_pos)).set_start(start_time).set_duration(txt_duration)
+            ).with_position(('center', y_pos)).with_start(start_time).with_duration(txt_duration)
             
             clips.append(txt_clip)
         
+        logger.info(f"✅ Added {len(lines)} text overlays at position: {text_position}")
+        
         # Composite
         final_clip = CompositeVideoClip(clips, size=(1080, 1920))
-        final_clip = final_clip.set_audio(audio_clip)
+        final_clip = final_clip.with_audio(audio_clip)
         
         # Save
         output_path = TEMP_DIR / f"video_{hash(text)}_{hash(str(background_path))}.mp4"

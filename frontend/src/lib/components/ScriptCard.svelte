@@ -137,10 +137,23 @@
 		
 		console.log('[ScriptCard] 🎬 STARTING VIDEO GENERATION');
 		console.log('[ScriptCard] Store values:', JSON.stringify(settings, null, 2));
+		
+		// Validate REQUIRED settings
+		if (!settings.backgroundUrl) {
+			alert('❌ Background is REQUIRED!\n\nPlease generate or upload a background before creating video.');
+			return;
+		}
+		
+		if (!settings.voiceId) {
+			alert('❌ Voice is REQUIRED!\n\nPlease select a voice before creating video.');
+			return;
+		}
+		
+		console.log('[ScriptCard] ✅ All required settings present');
 		console.log('[ScriptCard] Will send to API:', {
 			scriptId: script.id,
 			textPosition: settings.textPosition,
-			customBackground: settings.backgroundUrl || 'undefined',
+			customBackground: settings.backgroundUrl,
 			voiceId: settings.voiceId
 		});
 		
@@ -149,15 +162,15 @@
 			const result = await api.generateVideo(
 				script.id, 
 				settings.textPosition,
-				settings.backgroundUrl || undefined,
-				settings.voiceId
+				settings.backgroundUrl,  // Always present (validated above)
+				settings.voiceId         // Always present (validated above)
 			);
 			currentTaskId = result.task_id;
 			
 			console.log('[ScriptCard] ✅ API Response:', result);
 			console.log('[ScriptCard] Video generation started with settings:', {
 				textPosition: settings.textPosition,
-				backgroundUrl: settings.backgroundUrl || 'none (auto-detect)',
+				backgroundUrl: settings.backgroundUrl,
 				voiceId: settings.voiceId,
 				taskId: result.task_id
 			});

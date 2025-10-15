@@ -138,18 +138,29 @@ def generate_video_task(self, script_id: int, text_position: str = "center", cus
         
         # Generate video using SIMPLE generator (frontend settings only)
         try:
-            logger.info(f"🎬 Starting SIMPLE video generation")
-            logger.info(f"   Text: {len(text_for_video)} chars")
-            logger.info(f"   Voice: {voice_id}")
-            logger.info(f"   Background: {custom_background}")
-            logger.info(f"   Position: {text_position}")
+            logger.info(f"🎬 ========================================")
+            logger.info(f"🎬 STARTING VIDEO GENERATION")
+            logger.info(f"🎬 ========================================")
+            logger.info(f"📝 Script ID: {script_id}")
+            logger.info(f"📝 Text: {len(text_for_video)} chars")
+            logger.info(f"🎤 Voice ID: {voice_id or 'NOT PROVIDED'}")
+            logger.info(f"🖼️  Background: {custom_background or 'NOT PROVIDED'}")
+            logger.info(f"📐 Position: {text_position}")
+            logger.info(f"🎬 ========================================")
             
-            # Validate inputs
+            # Validate voice_id (REQUIRED)
             if not voice_id:
-                raise ValueError("voice_id is required from frontend")
+                error_msg = "❌ voice_id is REQUIRED from frontend! User must select a voice."
+                logger.error(error_msg)
+                raise ValueError(error_msg)
             
+            # Validate custom_background (REQUIRED)
             if not custom_background:
-                raise ValueError("custom_background is required from frontend")
+                error_msg = "❌ custom_background is REQUIRED from frontend! User must generate/upload background."
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+            
+            logger.info(f"✅ All required parameters present")
             
             # Use simple generator
             from ..services.video_generator import generate_video_simple
