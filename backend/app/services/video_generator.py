@@ -15,63 +15,70 @@ TEMP_DIR.mkdir(exist_ok=True)
 
 
 def generate_audio_elevenlabs(text: str, voice_id: str) -> Path:
-    """Generate audio using ElevenLabs API"""
+    """
+    Generate audio using ElevenLabs API - NO FALLBACKS
+    
+    Args:
+        text: Text to speak
+        voice_id: ElevenLabs voice ID from frontend (REQUIRED)
+    
+    Returns:
+        Path to generated audio file
+    
+    Raises:
+        ValueError: If ELEVENLABS_API_KEY not configured
+        requests.HTTPError: If API call fails
+    """
     import os
     
     api_key = os.getenv("ELEVENLABS_API_KEY")
     if not api_key:
-        raise ValueError("ELEVENLABS_API_KEY not configured")
+        error_msg = "❌ ELEVENLABS_API_KEY not configured! Add it to .env or Railway variables."
+        logger.error(error_msg)
+        raise ValueError(error_msg)
     
-    logger.info(f"🎤 Generating audio with ElevenLabs voice: {voice_id}")
+    logger.info(f"🎤 Generating audio with ElevenLabs")
+    logger.info(f"   Voice ID: {voice_id}")
+    logger.info(f"   Text length: {len(text)} chars")
     
-    try:
-        # Call ElevenLabs API directly
-        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-        
-        headers = {
-            "Accept": "audio/mpeg",
-            "Content-Type": "application/json",
-            "xi-api-key": api_key
+    # Call ElevenLabs API directly
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    
+    headers = {
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": api_key
+    }
+    
+    data = {
+        "text": text,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.75,
+            "style": 0.5,
+            "use_speaker_boost": True
         }
-        
-        data = {
-            "text": text,
-            "model_id": "eleven_multilingual_v2",
-            "voice_settings": {
-                "stability": 0.5,
-                "similarity_boost": 0.75,
-                "style": 0.5,
-                "use_speaker_boost": True
-            }
-        }
-        
-        response = requests.post(url, json=data, headers=headers, timeout=30)
-        response.raise_for_status()
-        
-        # Save audio
-        audio_file = TEMP_DIR / f"audio_elevenlabs_{voice_id[:8]}_{hash(text)}.mp3"
-        with open(audio_file, "wb") as f:
-            f.write(response.content)
-        
-        logger.info(f"✅ Audio generated: {audio_file}")
-        return audio_file
-        
-    except Exception as e:
-        logger.error(f"❌ ElevenLabs error: {e}")
-        raise
-
-
-def generate_audio_gtts(text: str) -> Path:
-    """Fallback: Generate audio using gTTS"""
-    from gtts import gTTS
+    }
     
-    logger.info(f"🎤 Generating audio with gTTS (fallback)")
+    logger.info(f"📡 Calling ElevenLabs API...")
+    response = requests.post(url, json=data, headers=headers, timeout=60)
     
-    audio_file = TEMP_DIR / f"audio_gtts_{hash(text)}.mp3"
-    tts = gTTS(text=text, lang='ru', slow=False)
-    tts.save(str(audio_file))
+    if response.status_code != 200:
+        error_msg = f"ElevenLabs API error: {response.status_code} - {response.text}"
+        logger.error(f"❌ {error_msg}")
+        raise requests.HTTPError(error_msg)
     
-    logger.info(f"✅ Audio generated (gTTS): {audio_file}")
+    # Save audio
+    audio_file = TEMP_DIR / f"audio_elevenlabs_{voice_id[:8]}_{hash(text)}.mp3"
+    with open(audio_file, "wb") as f:
+        f.write(response.content)
+    
+    audio_size_mb = audio_file.stat().st_size / 1024 / 1024
+    logger.info(f"✅ Audio generated successfully!")
+    logger.info(f"   File: {audio_file.name}")
+    logger.info(f"   Size: {audio_size_mb:.2f} MB")
+    
     return audio_file
 
 
@@ -250,12 +257,11 @@ def generate_video_simple(
         if progress_callback:
             progress_callback("processing", 30)
         
-        # 2. Generate audio with selected voice
-        try:
-            audio_path = generate_audio_elevenlabs(text, voice_id)
-        except Exception as e:
-            logger.warning(f"⚠️  ElevenLabs failed: {e}, using gTTS")
-            audio_path = generate_audio_gtts(text)
+        # 2. Generate audio with selected voice (NO FALLBACK - must use ElevenLabs)
+        logger.info(f"🎤 Generating audio with voice: {voice_id}")
+        audio_path = generate_audio_elevenlabs(text, voice_id)
+        # If ElevenLabs fails → exception raised → video generation fails
+        # NO fallback to gTTS!
         
         if progress_callback:
             progress_callback("processing", 60)
