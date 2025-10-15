@@ -33,11 +33,16 @@ function loadSettings(): VideoSettings {
 // Create store
 export const videoSettings = writable<VideoSettings>(loadSettings());
 
-// Save to localStorage on changes
+// Save to localStorage on changes (but skip blob URLs)
 if (typeof window !== 'undefined') {
 	videoSettings.subscribe(value => {
-		localStorage.setItem('video_settings', JSON.stringify(value));
-		console.log('[VideoSettings] Settings saved:', value);
+		// Don't save blob URLs to localStorage (they won't work after reload)
+		const valueToSave = {
+			...value,
+			backgroundUrl: value.backgroundUrl?.startsWith('blob:') ? null : value.backgroundUrl
+		};
+		localStorage.setItem('video_settings', JSON.stringify(valueToSave));
+		console.log('[VideoSettings] Settings saved:', valueToSave);
 	});
 }
 

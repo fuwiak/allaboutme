@@ -189,24 +189,22 @@
 			const blob = await response.blob();
 			const file = new File([blob], `${theme}_background.png`, { type: 'image/png' });
 			
-			// Create object URL for preview
-			const objectUrl = URL.createObjectURL(blob);
+			console.log('[ScriptCard] Uploading to backend...');
 			
-			// Update GLOBAL store with new background
+			// Upload to backend FIRST, then use server path
+			const result = await api.uploadBackground(file);
+			console.log('[ScriptCard] Background uploaded:', result.filename);
+			
+			// Use server path (this will persist in localStorage)
+			const serverPath = `/storage/backgrounds/${result.filename}`;
+			
+			// Update GLOBAL store with server path
 			videoSettings.update(s => ({ 
 				...s, 
-				backgroundUrl: objectUrl
+				backgroundUrl: serverPath
 			}));
 			
-			// Upload to backend in background
-			api.uploadBackground(file)
-				.then(result => {
-					console.log('[ScriptCard] Background uploaded:', result.filename);
-					// Update store with server path
-					const serverPath = `/storage/backgrounds/${result.filename}`;
-					videoSettings.update(s => ({ ...s, backgroundUrl: serverPath }));
-				})
-				.catch(err => console.error('Upload error:', err));
+			console.log('[ScriptCard] Background URL saved to store:', serverPath);
 			
 			alert(`✅ Background generated and saved globally: ${theme}`);
 		} catch (error) {
