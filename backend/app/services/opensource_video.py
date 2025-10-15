@@ -332,7 +332,7 @@ def create_opensource_video(
 
 
 # Для совместимости с HeyGen API
-def render_video_opensource(script: str, progress_callback=None, log_callback=None) -> tuple:
+def render_video_opensource(script: str, progress_callback=None, log_callback=None, text_position="center", custom_background=None, voice_id=None) -> tuple:
     """
     Обертка для совместимости с renderer.py
     Возвращает tuple (video_url, audio_url) - пути к созданному видео и аудио
@@ -341,10 +341,14 @@ def render_video_opensource(script: str, progress_callback=None, log_callback=No
         script: Текст для озвучки
         progress_callback: Функция для обновления статуса (status, elapsed)
         log_callback: Функция для логирования текстовых сообщений
+        text_position: Position of text (top, center, bottom)
+        custom_background: Custom background image path/URL
+        voice_id: ElevenLabs voice ID for TTS
     
     Returns:
         tuple: (video_url, audio_url)
     """
+    logger.info(f"📊 Opensource render with: position={text_position}, voice={voice_id}, bg={custom_background is not None}")
     try:
         if progress_callback:
             progress_callback("processing", 0)

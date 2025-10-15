@@ -317,13 +317,26 @@ def wait_video(video_id: str, timeout=900, progress_callback=None) -> str:
     logger.error(f"❌ Timeout: видео не было готово за {timeout} секунд")
     raise TimeoutError(f"Video {video_id} was not ready in {timeout} seconds")
 
-def render_video(script: str, progress_callback=None) -> str:
+def render_video(script: str, progress_callback=None, text_position="center", custom_background=None, voice_id=None) -> str:
     """
     Создает видео из сценария и возвращает URL.
     Пробует HeyGen, при ошибке использует open-source fallback.
+    
+    Args:
+        script: Text to convert to video
+        progress_callback: Callback for progress updates
+        text_position: Text position (top, center, bottom)
+        custom_background: Custom background image URL/path
+        voice_id: ElevenLabs voice ID (e.g., pNInz6obpgDQGcFmaJgB)
     """
     try:
-        logger.info("🎬 Начало рендеринга видео")
+        logger.info(f"🎬 Начало рендеринга видео (voice={voice_id}, position={text_position}, bg={custom_background is not None})")
+        
+        # Update VIDEO_CONFIG with custom settings
+        if custom_background:
+            update_video_config(background_url=custom_background)
+        if voice_id:
+            update_video_config(voice=voice_id)
         
         # Пробуем HeyGen
         try:
