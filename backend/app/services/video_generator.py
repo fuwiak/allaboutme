@@ -225,6 +225,16 @@ def generate_video_simple(
         # 1. Convert background URL to filesystem path
         from .. import storage as storage_module
         
+        # Ensure storage is initialized
+        if not storage_module.STORAGE_ROOT:
+            logger.error("❌ STORAGE_ROOT is None! Initializing...")
+            storage_module.init_storage()
+            
+        if not storage_module.STORAGE_ROOT:
+            raise ValueError("STORAGE_ROOT not initialized!")
+        
+        logger.info(f"✅ STORAGE_ROOT: {storage_module.STORAGE_ROOT}")
+        
         if background_url and background_url.startswith('/storage/'):
             relative_path = background_url.replace('/storage/', '')
             background_path = storage_module.STORAGE_ROOT / relative_path
