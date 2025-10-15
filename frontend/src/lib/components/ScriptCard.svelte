@@ -176,23 +176,26 @@
 	async function generateBackground() {
 		generatingBackground = true;
 		try {
-			const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(getPromptForTheme(backgroundTheme))}?width=1920&height=1080&nologo=true`;
+			// Use theme from global store
+			const theme = $videoSettings.backgroundTheme;
+			const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(getPromptForTheme(theme))}?width=1920&height=1080&nologo=true`;
+			
+			console.log('[ScriptCard] Generating background:', theme);
 			
 			const response = await fetch(imageUrl, { method: 'GET' });
 			
 			if (!response.ok) throw new Error('Failed to generate image');
 			
 			const blob = await response.blob();
-			const file = new File([blob], `${$videoSettings.backgroundTheme}_background.png`, { type: 'image/png' });
+			const file = new File([blob], `${theme}_background.png`, { type: 'image/png' });
 			
 			// Create object URL for preview
 			const objectUrl = URL.createObjectURL(blob);
 			
-			// Update GLOBAL store
+			// Update GLOBAL store with new background
 			videoSettings.update(s => ({ 
 				...s, 
-				backgroundUrl: objectUrl,
-				backgroundTheme: $videoSettings.backgroundTheme
+				backgroundUrl: objectUrl
 			}));
 			
 			// Upload to backend in background
@@ -205,8 +208,9 @@
 				})
 				.catch(err => console.error('Upload error:', err));
 			
-			alert(`✅ Background generated and saved globally: ${$videoSettings.backgroundTheme}`);
+			alert(`✅ Background generated and saved globally: ${theme}`);
 		} catch (error) {
+			console.error('[ScriptCard] Background generation error:', error);
 			alert(`Error generating background: ${error}`);
 		} finally {
 			generatingBackground = false;
