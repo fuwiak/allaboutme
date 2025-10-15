@@ -286,11 +286,23 @@ def create_opensource_video(
         logger.info(f"   Скрипт: {len(script)} символов")
         
         # 1. Скачиваем/создаем фон (или используем custom)
-        if custom_background_path and Path(custom_background_path).exists():
-            bg_image = Path(custom_background_path)
-            logger.info(f"✅ Using custom background: {bg_image}")
-            if log_callback:
-                log_callback(f"✅ Custom background loaded")
+        if custom_background_path:
+            logger.info(f"🖼️  Custom background requested: {custom_background_path}")
+            bg_path = Path(custom_background_path)
+            if bg_path.exists():
+                bg_image = bg_path
+                logger.info(f"✅ Using custom background: {bg_image}")
+                if log_callback:
+                    log_callback(f"✅ Custom background: {bg_image.name}")
+            else:
+                logger.warning(f"⚠️  Custom background not found: {custom_background_path}, using default")
+                if log_callback:
+                    log_callback(f"⚠️  Custom background not found, using default")
+                bg_image = download_background(
+                    background_category=background_category,
+                    index=background_index,
+                    log_callback=log_callback
+                )
         else:
             bg_image = download_background(background_category, background_index)
             if log_callback:
@@ -302,9 +314,15 @@ def create_opensource_video(
         
         if voice_id:
             # Use ElevenLabs with selected voice
+            logger.info(f"🎤 Using ElevenLabs voice: {voice_id}")
+            if log_callback:
+                log_callback(f"🎤 Voice: ElevenLabs ({voice_id})")
             audio_file = generate_voice_elevenlabs(script, voice_id, log_callback)
         else:
             # Use default (gTTS)
+            logger.info(f"🎤 Using default gTTS voice (lang={voice_lang})")
+            if log_callback:
+                log_callback(f"🎤 Voice: gTTS ({voice_lang})")
             audio_file = generate_voice(script, lang=voice_lang, slow=voice_slow, log_callback=log_callback)
         
         # 3. Загружаем аудио и получаем длительность
