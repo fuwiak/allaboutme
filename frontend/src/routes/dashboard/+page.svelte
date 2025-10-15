@@ -103,8 +103,9 @@
 	<main class="container mx-auto px-6 py-8">
 		<!-- Stats Cards -->
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-			<div
-				class="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20 hover:border-purple-500/50 transition-all"
+			<button
+				on:click={() => goto('/drafts')}
+				class="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20 hover:border-purple-500/50 transition-all cursor-pointer text-left"
 			>
 				<div class="flex items-center justify-between">
 					<div>
@@ -113,10 +114,11 @@
 					</div>
 					<div class="text-4xl">📝</div>
 				</div>
-			</div>
+			</button>
 
-			<div
-				class="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20 hover:border-blue-500/50 transition-all"
+			<button
+				on:click={() => goto('/drafts')}
+				class="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20 hover:border-blue-500/50 transition-all cursor-pointer text-left"
 			>
 				<div class="flex items-center justify-between">
 					<div>
@@ -125,10 +127,11 @@
 					</div>
 					<div class="text-4xl">🎥</div>
 				</div>
-			</div>
+			</button>
 
-			<div
-				class="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20 hover:border-green-500/50 transition-all"
+			<button
+				on:click={() => goto('/publish')}
+				class="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20 hover:border-green-500/50 transition-all cursor-pointer text-left"
 			>
 				<div class="flex items-center justify-between">
 					<div>
@@ -137,10 +140,11 @@
 					</div>
 					<div class="text-4xl">✅</div>
 				</div>
-			</div>
+			</button>
 
-			<div
-				class="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20 hover:border-yellow-500/50 transition-all"
+			<button
+				on:click={() => goto('/drafts')}
+				class="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20 hover:border-yellow-500/50 transition-all cursor-pointer text-left"
 			>
 				<div class="flex items-center justify-between">
 					<div>
@@ -149,7 +153,7 @@
 					</div>
 					<div class="text-4xl">⏳</div>
 				</div>
-			</div>
+			</button>
 		</div>
 
 		<!-- Quick Actions -->

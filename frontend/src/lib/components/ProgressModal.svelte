@@ -69,24 +69,25 @@
 		<!-- Header -->
 		<div class="flex items-center justify-between p-6 border-b border-gray-700">
 			<div class="flex items-center gap-3">
-				<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div>
+				{#if !isCompleted}
+					<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div>
+				{/if}
 				<h2 class="text-xl font-bold text-white">{title}</h2>
 			</div>
-			{#if isCompleted}
-				<button
-					on:click={handleClose}
-					class="text-gray-400 hover:text-white transition-colors"
-				>
-					<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M6 18L18 6M6 6l12 12"
-						/>
-					</svg>
-				</button>
-			{/if}
+			<button
+				on:click={handleClose}
+				class="text-gray-400 hover:text-white transition-colors"
+				title="Close modal"
+			>
+				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M6 18L18 6M6 6l12 12"
+					/>
+				</svg>
+			</button>
 		</div>
 
 		<!-- Content -->
