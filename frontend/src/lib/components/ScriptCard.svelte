@@ -504,11 +504,26 @@
 						on:change={async (e) => {
 							const file = e.currentTarget.files?.[0];
 							if (file) {
+								generatingBackground = true;
 								try {
+									console.log('[ScriptCard] Uploading custom background...');
 									const result = await api.uploadBackground(file);
-									alert(`Background uploaded: ${result.filename}`);
+									console.log('[ScriptCard] Upload result:', result);
+									
+									// Save to GLOBAL store with server path
+									const serverPath = `/storage/backgrounds/${result.filename}`;
+									videoSettings.update(s => ({ 
+										...s, 
+										backgroundUrl: serverPath 
+									}));
+									
+									console.log('[ScriptCard] Background URL saved to store:', serverPath);
+									alert(`✅ Background uploaded: ${result.filename}`);
 								} catch (error) {
+									console.error('[ScriptCard] Upload error:', error);
 									alert(`Upload error: ${error}`);
+								} finally {
+									generatingBackground = false;
 								}
 							}
 						}}
