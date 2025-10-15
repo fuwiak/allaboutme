@@ -454,6 +454,9 @@
 				<label class="block text-sm font-semibold text-gray-300 mb-2">
 					🖼️ Custom Background (Optional)
 				</label>
+				<p class="text-xs text-gray-400 mb-3">
+					⚠️ If empty, background will be auto-detected from script content. Generate custom to override.
+				</p>
 				
 				<!-- Theme Selector -->
 				<div class="mb-3">

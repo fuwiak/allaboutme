@@ -7,12 +7,12 @@ export interface VideoSettings {
 	backgroundTheme: string;
 }
 
-// Default settings
+// Default settings - NO custom background by default!
 const defaultSettings: VideoSettings = {
 	textPosition: 'center',
-	voiceId: 'adam',
-	backgroundUrl: null,
-	backgroundTheme: 'cosmic'
+	voiceId: 'pNInz6obpgDQGcFmaJgB', // Adam (ElevenLabs)
+	backgroundUrl: null, // null = auto-detect from script, user can override
+	backgroundTheme: 'cosmic' // Default theme for generation
 };
 
 // Load from localStorage if available
